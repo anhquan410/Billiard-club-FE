@@ -162,7 +162,7 @@ export default function ProductManagementPage() {
       case "FOOD":
         return "Đồ ăn";
       case "BEVERAGE":
-        return "Đồ uống";
+        return "Nước ngọt không gas";
       case "SERVICE":
         return "Dịch vụ";
       case "CIGARETTE":
@@ -171,6 +171,12 @@ export default function ProductManagementPage() {
         return "Khác";
       case "EQUIPMENT":
         return "Thiết bị";
+      case "SODA":
+        return "Nước ngọt có gas";
+      case "COFFEE":
+        return "Cà phê";
+      case "BEER":
+        return "Bia";
       default:
         return category;
     }
@@ -306,8 +312,11 @@ export default function ProductManagementPage() {
                 MenuProps={{ disableScrollLock: true }}
               >
                 <MenuItem value="ALL">Tất cả</MenuItem>
-                <MenuItem value="BEVERAGE">Đồ uống</MenuItem>
                 <MenuItem value="FOOD">Đồ ăn</MenuItem>
+                <MenuItem value="BEVERAGE">Nước ngọt không gas</MenuItem>
+                <MenuItem value="SODA">Nước ngọt có gas</MenuItem>
+                <MenuItem value="COFFEE">Cà phê</MenuItem>
+                <MenuItem value="BEER">Bia</MenuItem>
                 <MenuItem value="SERVICE">Dịch vụ</MenuItem>
                 <MenuItem value="EQUIPMENT">Thiết bị</MenuItem>
                 <MenuItem value="CIGARETTE">Thuốc lá</MenuItem>

@@ -90,7 +90,7 @@ export default function InventoryManagementPage() {
       case "FOOD":
         return "Đồ ăn";
       case "BEVERAGE":
-        return "Đồ uống";
+        return "Nước ngọt không gas";
       case "SERVICE":
         return "Dịch vụ";
       case "CIGARETTE":
@@ -99,6 +99,12 @@ export default function InventoryManagementPage() {
         return "Khác";
       case "EQUIPMENT":
         return "Thiết bị";
+      case "SODA":
+        return "Nước ngọt có gas";
+      case "COFFEE":
+        return "Cà phê";
+      case "BEER":
+        return "Bia";
       default:
         return category;
     }
@@ -106,39 +112,6 @@ export default function InventoryManagementPage() {
 
   return (
     <Box>
-      {/* Header Actions */}
-      {/* <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          p: 2,
-          bgcolor: "white",
-        }}
-      >
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          sx={{
-            bgcolor: "#f06292",
-            "&:hover": { bgcolor: "#ec407a" },
-            textTransform: "none",
-          }}
-        >
-          Thêm phiếu nhập
-        </Button>
-
-        <IconButton
-          sx={{
-            bgcolor: "#f5f5f5",
-            "&:hover": { bgcolor: "#e0e0e0" },
-          }}
-        >
-          <SettingsIcon />
-        </IconButton>
-      </Box> */}
-
-      {/* Filters */}
       <Box
         sx={{
           display: "flex",
@@ -171,8 +144,11 @@ export default function InventoryManagementPage() {
             MenuProps={{ disableScrollLock: true }}
           >
             <MenuItem value="ALL">Tất cả</MenuItem>
-            <MenuItem value="BEVERAGE">Đồ uống</MenuItem>
             <MenuItem value="FOOD">Đồ ăn</MenuItem>
+            <MenuItem value="BEVERAGE">Nước ngọt không gas</MenuItem>
+            <MenuItem value="SODA">Nước ngọt có gas</MenuItem>
+            <MenuItem value="COFFEE">Cà phê</MenuItem>
+            <MenuItem value="BEER">Bia</MenuItem>
             <MenuItem value="SERVICE">Dịch vụ</MenuItem>
             <MenuItem value="EQUIPMENT">Thiết bị</MenuItem>
             <MenuItem value="CIGARETTE">Thuốc lá</MenuItem>
