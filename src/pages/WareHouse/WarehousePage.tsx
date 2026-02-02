@@ -1,4 +1,3 @@
-import * as React from "react";
 import {
   Box,
   List,
@@ -16,11 +15,12 @@ import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
+import { useState } from "react";
 
 export default function WarehousePage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [openInventory, setOpenInventory] = React.useState(true);
+  const [openInventory, setOpenInventory] = useState(true);
 
   const isActive = (path: string) => {
     return (
@@ -64,7 +64,7 @@ export default function WarehousePage() {
                 bgcolor: openInventory ? "#fce4ec" : "transparent",
                 borderRadius: 1,
                 mb: 0.5,
-                "&: hover": {
+                "&:hover": {
                   bgcolor: "#fce4ec",
                 },
               }}
@@ -123,7 +123,7 @@ export default function WarehousePage() {
                     pl: 4,
                     borderRadius: 1,
                     mb: 0.5,
-                    "&. Mui-selected": {
+                    "&.Mui-selected": {
                       bgcolor: "#f06292",
                       color: "white",
                       "&:hover": {
@@ -159,7 +159,7 @@ export default function WarehousePage() {
                       "&:hover": {
                         bgcolor: "#ec407a",
                       },
-                      "& .MuiListItemIcon-root": {
+                      "&.MuiListItemIcon-root": {
                         color: "white",
                       },
                     },
@@ -191,7 +191,7 @@ export default function WarehousePage() {
                   "&:hover": {
                     bgcolor: "#ec407a",
                   },
-                  "& .MuiListItemIcon-root": {
+                  "&.MuiListItemIcon-root": {
                     color: "white",
                   },
                 },

@@ -9,10 +9,19 @@ import {
   Stack,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import { useAccount } from "../../libs/hooks/useAccount";
 
 export default function HomePage() {
+  const { user } = useAccount();
   const navigate = useNavigate();
 
+  const handleLogin = () => {
+    if (user) {
+      navigate("/marketing");
+    } else {
+      navigate("/auth/login");
+    }
+  };
   return (
     <Box
       sx={{
@@ -114,7 +123,7 @@ export default function HomePage() {
                     background: "linear-gradient(90deg, #fa9864, #f27ca6)",
                   },
                 }}
-                onClick={() => navigate("/auth/login")}
+                onClick={handleLogin}
               >
                 Đăng nhập
               </Button>

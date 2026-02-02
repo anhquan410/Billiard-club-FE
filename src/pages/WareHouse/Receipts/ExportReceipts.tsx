@@ -19,9 +19,9 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import SettingsIcon from "@mui/icons-material/Settings";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import type { ImportReceipt } from "../../libs/types/warehouse.type";
+import type { ExportReceipt } from "../../libs/types/warehouse.type";
 
-export default function ImportReceipts() {
+export default function ExportReceipts() {
   const [searchText, setSearchText] = React.useState("");
   const [branch, setBranch] = React.useState("iBall");
   const [warehouse, setWarehouse] = React.useState("all");
@@ -32,7 +32,7 @@ export default function ImportReceipts() {
   );
 
   // Mock data (empty)
-  const receipts: ImportReceipt[] = [];
+  const receipts: ExportReceipt[] = [];
 
   return (
     <Box>
@@ -71,7 +71,7 @@ export default function ImportReceipts() {
               textTransform: "none",
             }}
           >
-            Thêm mới phiếu nhập
+            Thêm mới phiếu
           </Button>
         </Box>
 
@@ -98,10 +98,10 @@ export default function ImportReceipts() {
       >
         <TextField
           size="small"
-          placeholder="Tên"
+          placeholder="Mã phiếu xuất, mã hóa đơn"
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
-          sx={{ flexGrow: 1, minWidth: 150 }}
+          sx={{ flexGrow: 1, minWidth: 200 }}
         />
 
         <FormControl size="small" sx={{ minWidth: 150 }}>
@@ -143,7 +143,7 @@ export default function ImportReceipts() {
             displayEmpty
           >
             <MenuItem value="all">Phân loại</MenuItem>
-            <MenuItem value="import">Nhập hàng</MenuItem>
+            <MenuItem value="export">Xuất hàng</MenuItem>
             <MenuItem value="return">Trả hàng</MenuItem>
           </Select>
         </FormControl>
@@ -173,11 +173,11 @@ export default function ImportReceipts() {
           <TableHead sx={{ bgcolor: "#f5f5f5" }}>
             <TableRow>
               <TableCell>STT</TableCell>
-              <TableCell>Mã</TableCell>
+              <TableCell>Mã phiếu</TableCell>
+              <TableCell>Mã hóa đơn</TableCell>
               <TableCell>Chi nhánh</TableCell>
-              <TableCell>Kho nhập</TableCell>
+              <TableCell>Kho xuất</TableCell>
               <TableCell>Ngày tạo</TableCell>
-              <TableCell>Tên nhà cung cấp</TableCell>
               <TableCell>Phân loại</TableCell>
               <TableCell>Tình trạng</TableCell>
               <TableCell>Sản phẩm imei</TableCell>
@@ -202,10 +202,10 @@ export default function ImportReceipts() {
                 <TableRow key={receipt.id} hover>
                   <TableCell>{index + 1}</TableCell>
                   <TableCell>{receipt.code}</TableCell>
+                  <TableCell>{receipt.invoiceCode || "-"}</TableCell>
                   <TableCell>{receipt.branch}</TableCell>
-                  <TableCell>{receipt.importWarehouse}</TableCell>
+                  <TableCell>{receipt.exportWarehouse}</TableCell>
                   <TableCell>{receipt.createdDate}</TableCell>
-                  <TableCell>{receipt.supplier}</TableCell>
                   <TableCell>{receipt.category}</TableCell>
                   <TableCell>{receipt.status}</TableCell>
                   <TableCell>{receipt.products.join(", ")}</TableCell>

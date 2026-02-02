@@ -17,12 +17,11 @@ import {
   IconButton,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import DownloadIcon from "@mui/icons-material/Download";
 import SettingsIcon from "@mui/icons-material/Settings";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import type { ExportReceipt } from "../../libs/types/warehouse.type";
+import type { ImportReceipt } from "../../libs/types/warehouse.type";
 
-export default function ExportReceipts() {
+export default function ImportReceipts() {
   const [searchText, setSearchText] = React.useState("");
   const [branch, setBranch] = React.useState("iBall");
   const [warehouse, setWarehouse] = React.useState("all");
@@ -33,7 +32,7 @@ export default function ExportReceipts() {
   );
 
   // Mock data (empty)
-  const receipts: ExportReceipt[] = [];
+  const receipts: ImportReceipt[] = [];
 
   return (
     <Box>
@@ -49,6 +48,21 @@ export default function ExportReceipts() {
       >
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button
+            variant="outlined"
+            startIcon={<MoreVertIcon />}
+            sx={{
+              borderColor: "#f06292",
+              color: "#f06292",
+              textTransform: "none",
+              "&:hover": {
+                borderColor: "#ec407a",
+                bgcolor: "#fce4ec",
+              },
+            }}
+          >
+            Chức năng khác
+          </Button>
+          <Button
             variant="contained"
             startIcon={<AddIcon />}
             sx={{
@@ -57,18 +71,7 @@ export default function ExportReceipts() {
               textTransform: "none",
             }}
           >
-            Thêm mới phiếu
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<DownloadIcon />}
-            sx={{
-              borderColor: "#f06292",
-              color: "#f06292",
-              textTransform: "none",
-            }}
-          >
-            Import excel
+            Thêm mới phiếu nhập
           </Button>
         </Box>
 
@@ -98,7 +101,7 @@ export default function ExportReceipts() {
           placeholder="Mã phiếu xuất, mã hóa đơn"
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
-          sx={{ flexGrow: 1, minWidth: 200 }}
+          sx={{ flexGrow: 1, minWidth: 150 }}
         />
 
         <FormControl size="small" sx={{ minWidth: 150 }}>
@@ -140,7 +143,7 @@ export default function ExportReceipts() {
             displayEmpty
           >
             <MenuItem value="all">Phân loại</MenuItem>
-            <MenuItem value="export">Xuất hàng</MenuItem>
+            <MenuItem value="import">Nhập hàng</MenuItem>
             <MenuItem value="return">Trả hàng</MenuItem>
           </Select>
         </FormControl>
@@ -170,11 +173,11 @@ export default function ExportReceipts() {
           <TableHead sx={{ bgcolor: "#f5f5f5" }}>
             <TableRow>
               <TableCell>STT</TableCell>
-              <TableCell>Mã phiếu</TableCell>
-              <TableCell>Mã hóa đơn</TableCell>
+              <TableCell>Mã</TableCell>
               <TableCell>Chi nhánh</TableCell>
-              <TableCell>Kho xuất</TableCell>
+              <TableCell>Kho nhập</TableCell>
               <TableCell>Ngày tạo</TableCell>
+              <TableCell>Tên nhà cung cấp</TableCell>
               <TableCell>Phân loại</TableCell>
               <TableCell>Tình trạng</TableCell>
               <TableCell>Sản phẩm imei</TableCell>
@@ -199,10 +202,10 @@ export default function ExportReceipts() {
                 <TableRow key={receipt.id} hover>
                   <TableCell>{index + 1}</TableCell>
                   <TableCell>{receipt.code}</TableCell>
-                  <TableCell>{receipt.invoiceCode || "-"}</TableCell>
                   <TableCell>{receipt.branch}</TableCell>
-                  <TableCell>{receipt.exportWarehouse}</TableCell>
+                  <TableCell>{receipt.importWarehouse}</TableCell>
                   <TableCell>{receipt.createdDate}</TableCell>
+                  <TableCell>{receipt.supplier}</TableCell>
                   <TableCell>{receipt.category}</TableCell>
                   <TableCell>{receipt.status}</TableCell>
                   <TableCell>{receipt.products.join(", ")}</TableCell>

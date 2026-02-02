@@ -32,8 +32,6 @@ function ProfilePage() {
     severity: "success" as "success" | "error",
   });
 
-  // console.log(profile);
-
   // Form State
   const [formValue, setFormValue] = useState({
     fullName: profile?.fullName || "",
@@ -77,7 +75,11 @@ function ProfilePage() {
             message: "Cập nhật thành công!",
             severity: "success",
           });
-          navigate(`/profile/${id}`);
+          if (profileData.role === "CUSTOMER") {
+            navigate("/customers");
+          } else {
+            navigate("/hr");
+          }
         },
         onError: (error, variable, context) => {
           setSnackbar({
@@ -157,10 +159,24 @@ function ProfilePage() {
           )}
 
           <Box display="flex" justifyContent="end" gap={3}>
-            <Button color="inherit" component={Link} to={`/marketing`}>
+            <Button
+              type="button"
+              color="error"
+              variant="contained"
+              component={Link}
+              to={`/marketing`}
+            >
               Cancel
             </Button>
-
+            <Button
+              type="button"
+              color="primary"
+              variant="contained"
+              component={Link}
+              to={`/profile/${id}/password-change`}
+            >
+              Đổi mật khẩu
+            </Button>
             <Button type="submit" color="success" variant="contained">
               Submit
             </Button>

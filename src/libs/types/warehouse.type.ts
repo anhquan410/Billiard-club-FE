@@ -1,3 +1,12 @@
+export type ProductStatus = "AVAILABLE" | "OUT_OF_STOCK" | "DISCONTINUED";
+export type ProductCategory =
+  | "FOOD"
+  | "BEVERAGE"
+  | "EQUIPMENT"
+  | "SERVICE"
+  | "CIGARETTE"
+  | "OTHER";
+
 export interface InventoryItem {
   id: number;
   name: string;
@@ -10,44 +19,57 @@ export interface InventoryItem {
   actualQuantity: number;
 }
 
-export interface ImportReceipt {
+export type ImportReceipt = {
   id: string;
   code: string;
   branch: string;
   importWarehouse: string;
   supplier: string;
   createdDate: string;
-  category: string;
+  category: ProductCategory;
   status: "pending" | "completed" | "cancelled";
   totalAmount: number;
-  products: string[];
+  products: ProductItem[];
   note?: string;
-}
+};
 
-export interface ExportReceipt {
+export type ExportReceipt = {
   id: string;
   code: string;
   invoiceCode?: string;
   branch: string;
   exportWarehouse: string;
   createdDate: string;
-  category: string;
+  category: ProductCategory;
   status: "pending" | "completed" | "cancelled";
   totalAmount: number;
-  products: string[];
+  products: ProductItem[];
   note?: string;
-}
+};
 
-export interface ProductItem {
+export type ProductItem = {
   id: number;
   name: string;
-  code: string;
-  image: string;
-  category: string;
-  unit: string;
-  price: number;
-  cost: number;
-  stock: number;
-  status: "active" | "inactive";
   description?: string;
-}
+  category: ProductCategory;
+  price: number;
+  costPrice: number;
+  stock: number;
+  minStock: number;
+  unit: string;
+  status: ProductStatus;
+  image: string;
+};
+
+export type ProductCreateRequest = {
+  name: string;
+  description?: string;
+  category: ProductCategory;
+  price: number;
+  costPrice: number;
+  stock: number;
+  minStock?: number;
+  unit?: string;
+  status: ProductStatus;
+  image?: string;
+};

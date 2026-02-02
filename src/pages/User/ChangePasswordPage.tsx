@@ -26,7 +26,6 @@ function ChangePasswordPage() {
     severity: "success" as "success" | "error",
   });
 
-  // console.log(profile);
 
   // Form State
   const [formValue, setFormValue] = useState({

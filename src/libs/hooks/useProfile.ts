@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getProfile } from "../api/profile";
 import { ACCOUNT_QUERY_KEY } from "./useAccount";
 import { useMemo } from "react";
 import type { Profile, User } from "../types";
 import { updateProfile as updateProfileApi } from "../api/profile";
+import { USERS_QUERY_KEY } from "./useUser";
 
 const PROFILE_QUERY_KEY = {
   all: ["profiles"],
@@ -24,11 +26,19 @@ export const useProfile = (id?: string) => {
   const { mutate: updateProfile, isPending: isUpdatingProfile } = useMutation({
     mutationFn: ({ id, profile }: { id: string; profile: Profile }) =>
       updateProfileApi(id, profile),
-    onSuccess: () => {
+    onSuccess: (_, _variables) => {
       queryClient.invalidateQueries({
-        queryKey: PROFILE_QUERY_KEY.profile(id),
+        queryKey: PROFILE_QUERY_KEY.profile(id as string),
+        refetchType: "all",
       });
-      queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEY.profile() });
+      queryClient.invalidateQueries({
+        queryKey: USERS_QUERY_KEY.all,
+        refetchType: "all",
+      });
+      queryClient.invalidateQueries({
+        queryKey: ACCOUNT_QUERY_KEY.user(),
+        refetchType: "all",
+      });
     },
   });
 

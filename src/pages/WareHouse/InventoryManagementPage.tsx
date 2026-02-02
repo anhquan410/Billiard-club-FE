@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as React from "react";
 import {
   Box,
@@ -20,101 +21,93 @@ import {
   Typography,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import AddIcon from "@mui/icons-material/Add";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import SettingsIcon from "@mui/icons-material/Settings";
-import type { InventoryItem } from "../../libs/types/warehouse.type";
+import type { ProductItem } from "../../libs/types/warehouse.type";
+import { useProductPagination } from "../../libs/hooks/useProduct";
+import { useSearchParams } from "react-router-dom";
+import { useState } from "react";
 
 export default function InventoryManagementPage() {
-  const [searchText, setSearchText] = React.useState("");
-  const [warehouse, setWarehouse] = React.useState("all");
-  const [page, setPage] = React.useState(1);
+  const [searchText, setSearchText] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const page = Number(searchParams.get("page")) || 1;
+  const limit = Number(searchParams.get("limit")) || 10;
 
-  // Mock data
-  const inventoryItems: InventoryItem[] = [
-    {
-      id: 1,
-      name: "Khăn lạnh",
-      image: "🧻",
-      warehouse: "Kho iBall",
-      unit: "",
-      quantity: -4,
-      exportedQuantity: 0,
-      averageImportPrice: 0,
-      actualQuantity: -4,
-    },
-    {
-      id: 2,
-      name: "Bò húc",
-      image: "🥫",
-      warehouse: "Kho iBall",
-      unit: "",
-      quantity: 0,
-      exportedQuantity: 0,
-      averageImportPrice: 0,
-      actualQuantity: 0,
-    },
-    {
-      id: 3,
-      name: "7 up",
-      image: "🥤",
-      warehouse: "Kho iBall",
-      unit: "",
-      quantity: 54,
-      exportedQuantity: 0,
-      averageImportPrice: 6428,
-      actualQuantity: 54,
-    },
-    {
-      id: 4,
-      name: "Ô Long",
-      image: "🍵",
-      warehouse: "Kho iBall",
-      unit: "",
-      quantity: -3,
-      exportedQuantity: 0,
-      averageImportPrice: 7291,
-      actualQuantity: -3,
-    },
-    {
-      id: 5,
-      name: "Trà xanh 0 độ",
-      image: "🍵",
-      warehouse: "Kho iBall",
-      unit: "",
-      quantity: 0,
-      exportedQuantity: 0,
-      averageImportPrice: 7339,
-      actualQuantity: 0,
-    },
-    {
-      id: 6,
-      name: "Coca - Pepsi",
-      image: "🥤",
-      warehouse: "Kho iBall",
-      unit: "",
-      quantity: 6,
-      exportedQuantity: 0,
-      averageImportPrice: 8088,
-      actualQuantity: 6,
-    },
-    {
-      id: 7,
-      name: "Sting vàng",
-      image: "⚡",
-      warehouse: "Kho iBall",
-      unit: "",
-      quantity: 36,
-      exportedQuantity: 0,
-      averageImportPrice: 7334,
-      actualQuantity: 36,
-    },
-  ];
+  // Khi mount lần đầu, nếu chưa có page/limit trên URL thì set mặc định chỉ với page/limit
+  React.useEffect(() => {
+    if (!searchParams.get("page") || !searchParams.get("limit")) {
+      setSearchParams(
+        { page: page.toString(), limit: limit.toString() },
+        { replace: true },
+      );
+    }
+    // eslint-disable-next-line
+  }, []);
+
+  // Lấy category từ URL nếu có
+  const category = searchParams.get("category") || "ALL";
+
+  // Luôn truyền đủ 3 tham số cho useProduct, nếu không có category thì truyền rỗng chuỗi
+  const { paginatedProducts } = useProductPagination(
+    page,
+    limit,
+    category !== "ALL" ? category : "",
+  );
+
+  if (!paginatedProducts) return <div>Loading...</div>;
+
+  // Xử lý đổi trang
+  const handlePageChange = (e: React.ChangeEvent<unknown>, value: number) => {
+    setSearchParams({
+      page: value.toString(),
+      limit: limit.toString(),
+    });
+  };
+
+  // Xử lý đổi limit/trang
+  const handleLimitChange = (e: any) => {
+    setSearchParams({ page: "1", limit: e.target.value.toString() });
+  };
+
+  // Xử lý đổi category
+  const handleCategoryChange = (e: any) => {
+    const newCategory = e.target.value;
+    if (newCategory === "ALL") {
+      // Xóa category khỏi URL, chỉ giữ page/limit
+      setSearchParams({ page: "1", limit: limit.toString() });
+    } else {
+      setSearchParams({
+        page: "1",
+        limit: limit.toString(),
+        category: newCategory,
+      });
+    }
+  };
+
+  // Hàm chuyển category code sang tên hiển thị
+  const getCategoryLabel = (category: string) => {
+    switch (category) {
+      case "FOOD":
+        return "Đồ ăn";
+      case "BEVERAGE":
+        return "Đồ uống";
+      case "SERVICE":
+        return "Dịch vụ";
+      case "CIGARETTE":
+        return "Thuốc lá";
+      case "OTHER":
+        return "Khác";
+      case "EQUIPMENT":
+        return "Thiết bị";
+      default:
+        return category;
+    }
+  };
 
   return (
     <Box>
       {/* Header Actions */}
-      <Box
+      {/* <Box
         sx={{
           display: "flex",
           justifyContent: "space-between",
@@ -143,7 +136,7 @@ export default function InventoryManagementPage() {
         >
           <SettingsIcon />
         </IconButton>
-      </Box>
+      </Box> */}
 
       {/* Filters */}
       <Box
@@ -172,13 +165,18 @@ export default function InventoryManagementPage() {
 
         <FormControl size="small" sx={{ minWidth: 200 }}>
           <Select
-            value={warehouse}
-            onChange={(e) => setWarehouse(e.target.value)}
+            value={category}
+            onChange={handleCategoryChange}
             displayEmpty
+            MenuProps={{ disableScrollLock: true }}
           >
-            <MenuItem value="all">Chọn kho</MenuItem>
-            <MenuItem value="iball">Kho iBall</MenuItem>
-            <MenuItem value="main">Kho chính</MenuItem>
+            <MenuItem value="ALL">Tất cả</MenuItem>
+            <MenuItem value="BEVERAGE">Đồ uống</MenuItem>
+            <MenuItem value="FOOD">Đồ ăn</MenuItem>
+            <MenuItem value="SERVICE">Dịch vụ</MenuItem>
+            <MenuItem value="EQUIPMENT">Thiết bị</MenuItem>
+            <MenuItem value="CIGARETTE">Thuốc lá</MenuItem>
+            <MenuItem value="OTHER">Khác</MenuItem>
           </Select>
         </FormControl>
 
@@ -203,74 +201,75 @@ export default function InventoryManagementPage() {
               <TableCell>STT</TableCell>
               <TableCell>Ảnh</TableCell>
               <TableCell>Sản phẩm</TableCell>
-              <TableCell>Tên kho</TableCell>
-              <TableCell>Đơn vị</TableCell>
-              <TableCell align="right">Số lượng</TableCell>
-              <TableCell align="right">Số lượng chờ xuất</TableCell>
-              <TableCell align="right">Giá nhập trung bình</TableCell>
-              <TableCell align="right">SL dụng tích</TableCell>
+              <TableCell>Danh mục</TableCell>
+              <TableCell align="center">Đơn vị</TableCell>
+              <TableCell align="center">Số lượng </TableCell>
+              <TableCell align="center">Giá nhập trung bình</TableCell>
+              <TableCell align="center">Giá nhập bán</TableCell>
               <TableCell>Thao tác</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {inventoryItems.map((item, index) => (
-              <TableRow key={item.id} hover>
-                <TableCell>{index + 1}</TableCell>
-                <TableCell>
-                  <Avatar
+            {paginatedProducts?.items.map(
+              (item: ProductItem, index: number) => (
+                <TableRow key={item.id} hover>
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>
+                    <Avatar
+                      sx={{
+                        width: 50,
+                        height: 50,
+                        bgcolor: "#f5f5f5",
+                        fontSize: "24px",
+                      }}
+                    >
+                      {item.image}
+                    </Avatar>
+                  </TableCell>
+                  <TableCell>
+                    <Typography fontWeight={500}>{item.name}</Typography>
+                  </TableCell>
+                  <TableCell>{getCategoryLabel(item.category)}</TableCell>
+                  <TableCell align="center">{item.unit || "-"}</TableCell>
+                  <TableCell
+                    align="center"
                     sx={{
-                      width: 50,
-                      height: 50,
-                      bgcolor: "#f5f5f5",
-                      fontSize: "24px",
+                      color: item.stock < 0 ? "error.main" : "text.primary",
+                      fontWeight: 500,
                     }}
                   >
-                    {item.image}
-                  </Avatar>
-                </TableCell>
-                <TableCell>
-                  <Typography fontWeight={500}>{item.name}</Typography>
-                </TableCell>
-                <TableCell>{item.warehouse}</TableCell>
-                <TableCell>{item.unit || "-"}</TableCell>
-                <TableCell
-                  align="right"
-                  sx={{
-                    color: item.quantity < 0 ? "error.main" : "text.primary",
-                    fontWeight: 500,
-                  }}
-                >
-                  {item.quantity}
-                </TableCell>
-                <TableCell align="right">{item.exportedQuantity}</TableCell>
-                <TableCell align="right">
-                  {item.averageImportPrice > 0 ? (
-                    <>
-                      {item.averageImportPrice.toLocaleString("vi-VN")}
-                      <IconButton size="small" color="error">
-                        <Typography fontSize="12px">🗑</Typography>
-                      </IconButton>
-                    </>
-                  ) : (
-                    0
-                  )}
-                </TableCell>
-                <TableCell
-                  align="right"
-                  sx={{
-                    color:
-                      item.actualQuantity < 0 ? "error.main" : "text.primary",
-                  }}
-                >
-                  {item.actualQuantity} (chi? c)
-                </TableCell>
-                <TableCell>
-                  <IconButton size="small">
-                    <VisibilityIcon />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
+                    {item.stock}
+                  </TableCell>
+                  <TableCell align="center">
+                    {item.costPrice > 0 ? (
+                      <>
+                        {item.costPrice.toLocaleString("vi-VN")}
+                        &nbsp;₫
+                      </>
+                    ) : (
+                      0
+                    )}
+                  </TableCell>
+
+                  <TableCell align="center">
+                    {item.price > 0 ? (
+                      <>
+                        {item.price.toLocaleString("vi-VN")}
+                        &nbsp;₫
+                      </>
+                    ) : (
+                      0
+                    )}
+                  </TableCell>
+
+                  <TableCell align="center">
+                    <IconButton size="small">
+                      <VisibilityIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ),
+            )}
           </TableBody>
         </Table>
       </TableContainer>
@@ -286,21 +285,25 @@ export default function InventoryManagementPage() {
         }}
       >
         <Typography variant="body2" color="text.secondary">
-          1 - 10 of 48 items
+          1 - {limit} of {paginatedProducts?.total} items
         </Typography>
         <Pagination
-          count={5}
+          count={Math.ceil(paginatedProducts?.total / limit)}
           page={page}
-          onChange={(e, value) => setPage(value)}
+          onChange={handlePageChange}
           color="primary"
           sx={{
-            "& . Mui-selected": {
+            "& .Mui-selected": {
               bgcolor: "#f06292 !important",
             },
           }}
         />
         <FormControl size="small" sx={{ minWidth: 100 }}>
-          <Select defaultValue={10}>
+          <Select
+            value={limit}
+            onChange={handleLimitChange}
+            MenuProps={{ disableScrollLock: true }}
+          >
             <MenuItem value={10}>10 / trang</MenuItem>
             <MenuItem value={20}>20 / trang</MenuItem>
             <MenuItem value={50}>50 / trang</MenuItem>
