@@ -53,9 +53,9 @@ export default function ProductManagementPage() {
   const page = Number(searchParams.get("page")) || 1;
   const limit = Number(searchParams.get("limit")) || 10;
 
-  const [selectedProducts, setSelectedProducts] = useState<number[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedProductId, setSelectedProductId] = useState<number | null>(
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(
     null,
   );
   const { deleteProductById } = useProduct();
@@ -182,7 +182,7 @@ export default function ProductManagementPage() {
     }
   };
 
-  const handleSelectOne = (id: number) => {
+  const handleSelectOne = (id: string) => {
     if (selectedProducts.includes(id)) {
       setSelectedProducts(selectedProducts.filter((pid) => pid !== id));
     } else {
@@ -192,7 +192,7 @@ export default function ProductManagementPage() {
 
   const handleOpenMenu = (
     event: React.MouseEvent<HTMLElement>,
-    productId: number,
+    productId: string,
   ) => {
     setAnchorEl(event.currentTarget);
     setSelectedProductId(productId);

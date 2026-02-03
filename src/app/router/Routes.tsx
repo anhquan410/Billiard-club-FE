@@ -24,6 +24,7 @@ import ImportReceipts from "../../pages/WareHouse/Receipts/ImportReceipts";
 import ExportReceipts from "../../pages/WareHouse/Receipts/ExportReceipts";
 import CreateUserForm from "../../components/Form/CreateUserForm";
 import CreateProductForm from "../../components/Form/CreateProductForm";
+import TableDetailPage from "../../pages/Store/Table/TableDetailPage";
 
 export const router = createBrowserRouter([
   {
@@ -59,7 +60,14 @@ export const router = createBrowserRouter([
               },
               { path: "purchasing", element: <PurchasingPage /> },
               { path: "accounting", element: <AccountingPage /> },
-              { path: "store", element: <StorePage /> },
+              {
+                path: "store",
+                element: <StorePage />,
+                children: [
+                  { index: true, element: <div /> },
+                  { path: "table/:id", element: <TableDetailPage /> },
+                ],
+              },
               { path: "tasks", element: <TasksPage /> },
               { path: "customers", element: <CustomerPage /> },
               { path: "hr", element: <HrPage /> },

@@ -7,7 +7,8 @@ import {
   IconButton,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import type { TableData } from "../../libs/types/store.type";
+import EditIcon from "@mui/icons-material/Edit";
+import type { TableData, tableStatus } from "../../libs/types/store.type";
 
 interface TableCardProps {
   table: TableData;
@@ -15,10 +16,15 @@ interface TableCardProps {
 }
 
 export default function TableCard({ table, onOpenOrder }: TableCardProps) {
+  const statusColor: Record<tableStatus, string> = {
+    AVAILABLE: "#4caf50",
+    OCCUPIED: "#eb1a1a",
+    RESERVED: "#616161",
+  };
   return (
     <Card
       sx={{
-        bgcolor: "#4caf50",
+        bgcolor: statusColor[table.status],
         color: "white",
         position: "relative",
         minHeight: 200,
@@ -26,14 +32,18 @@ export default function TableCard({ table, onOpenOrder }: TableCardProps) {
     >
       <CardContent sx={{ pb: 2 }}>
         <Typography variant="h6" fontWeight="bold" sx={{ mb: 0.5 }}>
-          {table.name}
+          {table.tableName}
         </Typography>
         <Typography variant="caption" sx={{ opacity: 0.9 }}>
-          Trống
+          {table.status === "AVAILABLE"
+            ? "Trống"
+            : table.status === "OCCUPIED"
+              ? "Đang sử dụng"
+              : "Đã đặt trước"}
         </Typography>
         <Box sx={{ mt: 2, fontSize: "13px" }}>
           <Typography variant="body2" sx={{ mb: 0.5 }}>
-            KH:
+            KH: Khách vãng lai
           </Typography>
           <Typography variant="body2" sx={{ mb: 0.5 }}>
             Tổng tiền:
@@ -50,7 +60,7 @@ export default function TableCard({ table, onOpenOrder }: TableCardProps) {
             <Typography variant="body2">Đèn: </Typography>
             <Switch
               size="small"
-              checked={table.lightOn}
+              checked={table.status !== "AVAILABLE"}
               sx={{
                 "& .MuiSwitch-switchBase": {
                   color: "white",
@@ -78,7 +88,7 @@ export default function TableCard({ table, onOpenOrder }: TableCardProps) {
             },
           }}
         >
-          <AddIcon />
+          {table.status === "OCCUPIED" ? <EditIcon /> : <AddIcon />}
         </IconButton>
       </CardContent>
     </Card>

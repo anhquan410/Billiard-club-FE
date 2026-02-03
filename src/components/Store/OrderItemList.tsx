@@ -6,8 +6,8 @@ import type { OrderItem } from "../../libs/types/store.type";
 
 type OrderItemListProps = {
   items: OrderItem[];
-  onUpdateQuantity: (productId: number, delta: number) => void;
-  onRemoveItem: (productId: number) => void;
+  onUpdateQuantity: (productId: string, delta: number) => void;
+  onRemoveItem: (productId: string) => void;
 };
 
 export default function OrderItemList({

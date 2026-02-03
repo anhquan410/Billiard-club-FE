@@ -57,7 +57,7 @@ const menuItems: MenuItem[] = [
     path: "/accounting",
   },
   {
-    text: "Cửa hàng",
+    text: "Thu ngân",
     icon: <StorefrontIcon sx={{ color: "#4caf50" }} />,
     path: "/store",
   },

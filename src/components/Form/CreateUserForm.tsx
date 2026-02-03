@@ -110,6 +110,7 @@ function CreateUserForm() {
                 <Select
                   labelId="role-label"
                   name="role"
+                  value={formValue.role}
                   label="Role"
                   onChange={handleInputChange}
                   MenuProps={{ disableScrollLock: true }}

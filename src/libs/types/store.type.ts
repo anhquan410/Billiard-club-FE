@@ -1,20 +1,12 @@
-export type TableData = {
-  id: number;
-  name: string;
-  type: "normal" | "vip";
-  status: "empty" | "occupied";
-  customer?: string;
-  totalAmount: number;
-  lightOn: boolean;
-};
+export type tableStatus = "AVAILABLE" | "OCCUPIED" | "RESERVED";
 
-export type Product = {
-  id: number;
-  name: string;
-  price: number;
-  image: string;
-  category: string;
-  stock: string;
+export type TableData = {
+  id: string;
+  tableNumber: string;
+  tableName: string;
+  hourlyRate: number;
+  status: tableStatus;
+  description?: string;
 };
 
 export type Order = {
@@ -32,10 +24,10 @@ export type Order = {
   status: string;
 };
 
-export type OrderItem = {
-  productId: number;
-  productName: string;
+export type SessionService = {
+  productId: string;
+  sessionId: string;
   price: number;
   quantity: number;
-  total: number;
+  subtotal: number;
 };

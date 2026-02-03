@@ -48,7 +48,7 @@ export type ExportReceipt = {
 };
 
 export type ProductItem = {
-  id: number;
+  id: string;
   name: string;
   description?: string;
   category: ProductCategory;
