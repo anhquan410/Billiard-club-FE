@@ -39,6 +39,8 @@ import PaymentModal from "../../../components/Store/PaymentModal";
 
 export default function TableDetailPage() {
   const [productTab, setProductTab] = useState(0);
+  const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [open, setOpen] = useState(false);
@@ -394,6 +396,8 @@ export default function TableDetailPage() {
                 size="small"
                 fullWidth
                 placeholder="Tìm kiếm"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -405,7 +409,10 @@ export default function TableDetailPage() {
               />
               <Tabs
                 value={productTab}
-                onChange={(_, val) => setProductTab(val)}
+                onChange={(_, val) => {
+                  setProductTab(val);
+                  setSelectedCategory(val === 0 ? "ALL" : "EQUIPMENT");
+                }}
                 sx={{ minHeight: 36 }}
               >
                 <Tab label="Sản phẩm" />
@@ -413,83 +420,108 @@ export default function TableDetailPage() {
               </Tabs>
               <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", my: 1 }}>
                 {[
-                  "Tất cả",
-                  "Food",
-                  "Beer",
-                  "Thuốc lá",
-                  "Khác",
-                  "Nước ngọt",
-                  "Coffe",
+                  { label: "Tất cả", value: "ALL" },
+                  { label: "Đồ ăn", value: "FOOD" },
+                  { label: "Bia", value: "BEER" },
+                  { label: "Nước ngọt có gas", value: "SODA" },
+                  { label: "Nước ngọt không gas", value: "BEVERAGE" },
+                  { label: "Thuốc lá", value: "CIGARETTE" },
+                  { label: "Cà phê", value: "COFFEE" },
+                  { label: "Khác", value: "OTHER" },
                 ].map((cat, i) => (
                   <Button
                     key={i}
                     variant="outlined"
                     size="small"
+                    onClick={() => {
+                      setSelectedCategory(cat.value);
+                      setProductTab(0);
+                    }}
                     sx={{
                       borderRadius: 5,
-                      borderColor: "#fb85a6",
-                      color: "#fb85a6",
+                      borderColor:
+                        selectedCategory === cat.value ? "#fb85a6" : "#ddd",
+                      color:
+                        selectedCategory === cat.value ? "#fb85a6" : "#666",
+                      bgcolor:
+                        selectedCategory === cat.value
+                          ? "#fff5f7"
+                          : "transparent",
                       px: 2,
                       minWidth: 60,
                       minHeight: 28,
-                      fontWeight: 500,
+                      fontWeight: selectedCategory === cat.value ? 600 : 500,
                     }}
                   >
-                    {cat}
+                    {cat.label}
                   </Button>
                 ))}
               </Box>
               <Box sx={{ maxHeight: 370, overflowY: "auto", pr: 1 }}>
-                {products?.map((p: ProductItem) => (
-                  <Box
-                    key={p.id}
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      py: 1.2,
-                      borderBottom: "1px dashed #f2b0c3",
-                    }}
-                  >
-                    <Box>
-                      <Typography sx={{ fontWeight: 500 }}>{p.name}</Typography>
-                      <Typography color="#fb85a6" fontWeight={500}>
-                        {p.price.toLocaleString()} đ&nbsp;&nbsp;
-                        {p.stock > 0 ? (
-                          <Typography
-                            component="span"
-                            color="success.main"
-                            fontSize={14}
-                          >
-                            Còn : {p.stock}
-                          </Typography>
-                        ) : (
-                          <Typography
-                            component="span"
-                            color="error"
-                            fontSize={14}
-                          >
-                            Hết hàng
-                          </Typography>
-                        )}
-                      </Typography>
-                    </Box>
-                    <IconButton
-                      onClick={() => {
-                        handleAddService(p.id);
-                      }}
-                      disabled={p.stock <= 0}
+                {products
+                  ?.filter((p: ProductItem) => {
+                    // Filter by category
+                    const categoryMatch =
+                      selectedCategory === "ALL" ||
+                      p.category === selectedCategory;
+                    // Filter by search term
+                    const searchMatch =
+                      searchTerm === "" ||
+                      p.name.toLowerCase().includes(searchTerm.toLowerCase());
+                    return categoryMatch && searchMatch;
+                  })
+                  .map((p: ProductItem) => (
+                    <Box
+                      key={p.id}
                       sx={{
-                        bgcolor: "#fb85a6",
-                        color: "#fff",
-                        "&:hover": { bgcolor: "#1976d2" },
-                        "&:disabled": { bgcolor: "#ccc" },
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        py: 1.2,
+                        borderBottom: "1px dashed #f2b0c3",
                       }}
                     >
-                      <AddIcon />
-                    </IconButton>
-                  </Box>
-                ))}
+                      <Box>
+                        <Typography sx={{ fontWeight: 500 }}>
+                          {p.name}
+                        </Typography>
+                        <Typography color="#fb85a6" fontWeight={500}>
+                          {p.price.toLocaleString()} đ&nbsp;&nbsp;
+                          {p.stock > 0 ? (
+                            <Typography
+                              component="span"
+                              color="success.main"
+                              fontSize={14}
+                            >
+                              Còn : {p.stock}
+                            </Typography>
+                          ) : (
+                            <Typography
+                              component="span"
+                              color="error"
+                              fontSize={14}
+                            >
+                              Hết hàng
+                            </Typography>
+                          )}
+                        </Typography>
+                      </Box>
+                      <IconButton
+                        onClick={() => {
+                          handleAddService(p.id);
+                        }}
+                        disabled={p.stock <= 0}
+                        sx={{
+                          bgcolor: "#fb85a6",
+                          color: "#fff",
+                          "&:hover": { bgcolor: "#1976d2" },
+                          "&:disabled": { bgcolor: "#ccc" },
+                        }}
+                      >
+                        <AddIcon />
+                      </IconButton>
+                    </Box>
+                  ))}
               </Box>
               <Box
                 sx={{
