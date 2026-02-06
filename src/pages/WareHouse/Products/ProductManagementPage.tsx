@@ -401,7 +401,7 @@ export default function ProductManagementPage() {
                     </TableCell>
                     <TableCell align="right">
                       <Typography fontWeight={500}>
-                        {product.price.toLocaleString("vi-VN")}
+                        {Number(product.price).toLocaleString("vi-VN")}
                       </Typography>
                     </TableCell>
                     <TableCell align="center">

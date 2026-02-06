@@ -48,6 +48,8 @@ export default function TableDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { table, isLoadingTable } = useTable(id);
 
+  // console.log(products)
+
   // Fetch real-time session data từ API - luôn gọi hook
   const {
     sessionData,
@@ -58,7 +60,7 @@ export default function TableDetailPage() {
 
   const service = sessionData?.session?.services || [];
 
-  console.log("Session data:", sessionData);
+  // console.log("Session data:", sessionData);
 
   // Handler để thêm sản phẩm vào bàn
   const handleAddService = (productId: string) => {
@@ -298,7 +300,9 @@ export default function TableDetailPage() {
                 alignItems="center"
               >
                 <Typography fontWeight={500}>Thời gian chơi</Typography>
-                <Typography>{sessionData?.durationMins} phút</Typography>
+                <Typography color="green" fontWeight={500}>
+                  {sessionData?.durationMins} phút
+                </Typography>
               </Box>
               <Box
                 display="flex"

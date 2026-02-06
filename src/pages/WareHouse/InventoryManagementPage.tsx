@@ -219,7 +219,7 @@ export default function InventoryManagementPage() {
                   <TableCell align="center">
                     {item.costPrice > 0 ? (
                       <>
-                        {item.costPrice.toLocaleString("vi-VN")}
+                        {Number(item.costPrice).toLocaleString("vi-VN")}
                         &nbsp;₫
                       </>
                     ) : (
@@ -230,7 +230,7 @@ export default function InventoryManagementPage() {
                   <TableCell align="center">
                     {item.price > 0 ? (
                       <>
-                        {item.price.toLocaleString("vi-VN")}
+                        {Number(item.price).toLocaleString("vi-VN")}
                         &nbsp;₫
                       </>
                     ) : (

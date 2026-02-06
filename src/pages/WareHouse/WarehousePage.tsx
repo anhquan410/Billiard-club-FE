@@ -109,7 +109,7 @@ export default function WarehousePage() {
                     <BarChartIcon fontSize="small" />
                   </ListItemIcon>
                   <ListItemText
-                    primary="Quản lý kho hàng bán"
+                    primary="Quản lý kho hàng"
                     primaryTypographyProps={{
                       fontSize: "13px",
                     }}

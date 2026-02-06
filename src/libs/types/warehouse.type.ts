@@ -6,6 +6,7 @@ export type ProductCategory =
   | "SERVICE"
   | "CIGARETTE"
   | "OTHER";
+export type MovementType = "IMPORT" | "EXPORT" | "ADJUST";
 
 export interface InventoryItem {
   id: number;
@@ -19,32 +20,13 @@ export interface InventoryItem {
   actualQuantity: number;
 }
 
-export type ImportReceipt = {
-  id: string;
-  code: string;
-  branch: string;
-  importWarehouse: string;
-  supplier: string;
-  createdDate: string;
-  category: ProductCategory;
-  status: "pending" | "completed" | "cancelled";
-  totalAmount: number;
-  products: ProductItem[];
-  note?: string;
-};
-
-export type ExportReceipt = {
-  id: string;
-  code: string;
-  invoiceCode?: string;
-  branch: string;
-  exportWarehouse: string;
-  createdDate: string;
-  category: ProductCategory;
-  status: "pending" | "completed" | "cancelled";
-  totalAmount: number;
-  products: ProductItem[];
-  note?: string;
+export type StockMovement = {
+  productId: string;
+  type: MovementType;
+  quantity: number;
+  unitPrice?: number;
+  totalValue?: number;
+  reason?: string;
 };
 
 export type ProductItem = {

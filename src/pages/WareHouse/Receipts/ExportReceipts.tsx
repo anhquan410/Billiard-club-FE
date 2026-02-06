@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as React from "react";
 import {
   Box,
@@ -15,24 +16,73 @@ import {
   Paper,
   Typography,
   IconButton,
+  Pagination,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import SettingsIcon from "@mui/icons-material/Settings";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import type { ExportReceipt } from "../../libs/types/warehouse.type";
+import { useReceiptPagination } from "../../../libs/hooks/useReceipt";
+import { useSearchParams } from "react-router";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
 
 export default function ExportReceipts() {
   const [searchText, setSearchText] = React.useState("");
   const [branch, setBranch] = React.useState("iBall");
-  const [warehouse, setWarehouse] = React.useState("all");
+  const [warehouse, setWarehouse] = React.useState("Kho iBall");
   const [status, setStatus] = React.useState("all");
-  const [category, setCategory] = React.useState("all");
+  const [category, setCategory] = React.useState("export");
   const [dateRange, setDateRange] = React.useState(
     "13/01/2026 00:01 → 13/01/2026 23:59",
   );
 
-  // Mock data (empty)
-  const receipts: ExportReceipt[] = [];
+  const [searchParams, setSearchParams] = useSearchParams();
+  const page = Number(searchParams.get("page")) || 1;
+  const limit = Number(searchParams.get("limit")) || 10;
+
+  const { paginatedStockMovements, isLoadingStockMovements } =
+    useReceiptPagination(page, limit, "EXPORT");
+
+  // Khi mount lần đầu, nếu chưa có page/limit trên URL thì set mặc định chỉ với page/limit
+  React.useEffect(() => {
+    if (!searchParams.get("page") || !searchParams.get("limit")) {
+      setSearchParams(
+        { page: page.toString(), limit: limit.toString(), type: "EXPORT" },
+        { replace: true },
+      );
+    }
+    // eslint-disable-next-line
+  }, []);
+
+  if (isLoadingStockMovements) {
+    return <div>Loading...</div>;
+  }
+  // console.log(paginatedStockMovements);
+
+  // Format ngày giờ theo định dạng Việt Nam
+  const formatVietnameseDateTime = (dateString: string) => {
+    return format(new Date(dateString), "dd/MM/yyyy HH:mm:ss", { locale: vi });
+  };
+
+  // Xử lý đổi trang
+  const handlePageChange = (_e: React.ChangeEvent<unknown>, value: number) => {
+    const params: Record<string, string> = {
+      page: value.toString(),
+      limit: limit.toString(),
+      type: "EXPORT",
+    };
+    setSearchParams(params);
+  };
+
+  // Xử lý đổi limit/trang
+  const handleLimitChange = (e: any) => {
+    const params: Record<string, string> = {
+      page: "1",
+      limit: e.target.value.toString(),
+      type: "EXPORT",
+    };
+    setSearchParams(params);
+  };
 
   return (
     <Box>
@@ -105,9 +155,12 @@ export default function ExportReceipts() {
         />
 
         <FormControl size="small" sx={{ minWidth: 150 }}>
-          <Select value={branch} onChange={(e) => setBranch(e.target.value)}>
+          <Select
+            value={branch}
+            onChange={(e) => setBranch(e.target.value)}
+            MenuProps={{ disableScrollLock: true }}
+          >
             <MenuItem value="iBall">iBall</MenuItem>
-            <MenuItem value="branch2">Chi nhánh 2</MenuItem>
           </Select>
         </FormControl>
 
@@ -116,10 +169,9 @@ export default function ExportReceipts() {
             value={warehouse}
             onChange={(e) => setWarehouse(e.target.value)}
             displayEmpty
+            MenuProps={{ disableScrollLock: true }}
           >
-            <MenuItem value="all">Chọn kho</MenuItem>
-            <MenuItem value="iball">Kho iBall</MenuItem>
-            <MenuItem value="main">Kho chính</MenuItem>
+            <MenuItem value="Kho iBall">Kho iBall</MenuItem>
           </Select>
         </FormControl>
 
@@ -128,6 +180,7 @@ export default function ExportReceipts() {
             value={status}
             onChange={(e) => setStatus(e.target.value)}
             displayEmpty
+            MenuProps={{ disableScrollLock: true }}
           >
             <MenuItem value="all">Trạng thái phiếu</MenuItem>
             <MenuItem value="completed">Hoàn thành</MenuItem>
@@ -141,10 +194,9 @@ export default function ExportReceipts() {
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             displayEmpty
+            MenuProps={{ disableScrollLock: true }}
           >
-            <MenuItem value="all">Phân loại</MenuItem>
             <MenuItem value="export">Xuất hàng</MenuItem>
-            <MenuItem value="return">Trả hàng</MenuItem>
           </Select>
         </FormControl>
 
@@ -174,19 +226,16 @@ export default function ExportReceipts() {
             <TableRow>
               <TableCell>STT</TableCell>
               <TableCell>Mã phiếu</TableCell>
-              <TableCell>Mã hóa đơn</TableCell>
-              <TableCell>Chi nhánh</TableCell>
               <TableCell>Kho xuất</TableCell>
               <TableCell>Ngày tạo</TableCell>
+              <TableCell>Sản phẩm </TableCell>
               <TableCell>Phân loại</TableCell>
-              <TableCell>Tình trạng</TableCell>
-              <TableCell>Sản phẩm imei</TableCell>
-              <TableCell>Diễn giải</TableCell>
+              <TableCell>Số lượng</TableCell>
               <TableCell>Thao tác</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {receipts.length === 0 ? (
+            {paginatedStockMovements?.stockItems.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={11} align="center" sx={{ py: 8 }}>
                   <Box sx={{ textAlign: "center", color: "text.secondary" }}>
@@ -198,29 +247,67 @@ export default function ExportReceipts() {
                 </TableCell>
               </TableRow>
             ) : (
-              receipts.map((receipt, index) => (
-                <TableRow key={receipt.id} hover>
-                  <TableCell>{index + 1}</TableCell>
-                  <TableCell>{receipt.code}</TableCell>
-                  <TableCell>{receipt.invoiceCode || "-"}</TableCell>
-                  <TableCell>{receipt.branch}</TableCell>
-                  <TableCell>{receipt.exportWarehouse}</TableCell>
-                  <TableCell>{receipt.createdDate}</TableCell>
-                  <TableCell>{receipt.category}</TableCell>
-                  <TableCell>{receipt.status}</TableCell>
-                  <TableCell>{receipt.products.join(", ")}</TableCell>
-                  <TableCell>{receipt.note || "-"}</TableCell>
-                  <TableCell>
-                    <IconButton size="small">
-                      <MoreVertIcon />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))
+              paginatedStockMovements?.stockItems.map(
+                (receipt: any, index: number) => (
+                  <TableRow key={receipt.id} hover>
+                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>{receipt.id}</TableCell>
+                    <TableCell>Iball</TableCell>
+                    <TableCell>
+                      {formatVietnameseDateTime(receipt.createdAt)}
+                    </TableCell>
+                    <TableCell>{receipt.product.name}</TableCell>
+                    <TableCell>{receipt.product.category}</TableCell>
+                    <TableCell>{receipt.quantity * -1}</TableCell>
+                    <TableCell>
+                      <IconButton size="small">
+                        <MoreVertIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ),
+              )
             )}
           </TableBody>
         </Table>
       </TableContainer>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          p: 2,
+          bgcolor: "white",
+          borderTop: "1px solid #e0e0e0",
+        }}
+      >
+        <Typography variant="body2" color="text.secondary">
+          1 - {limit} of {paginatedStockMovements?.total} items
+        </Typography>
+        <Pagination
+          count={Math.ceil(paginatedStockMovements?.total / limit)}
+          page={page}
+          onChange={handlePageChange}
+          color="primary"
+          sx={{
+            "& . Mui-selected": {
+              bgcolor: "#f06292 !important",
+              color: "white",
+            },
+          }}
+        />
+        <FormControl size="small" sx={{ minWidth: 120 }}>
+          <Select
+            value={limit}
+            onChange={handleLimitChange}
+            MenuProps={{ disableScrollLock: true }}
+          >
+            <MenuItem value={10}>10 / trang</MenuItem>
+            <MenuItem value={20}>20 / trang</MenuItem>
+            <MenuItem value={50}>50 / trang</MenuItem>
+          </Select>
+        </FormControl>
+      </Box>
     </Box>
   );
 }

@@ -9,6 +9,8 @@ import {
   addServiceToTable as addServiceToTableApi,
   removeServiceFromTable as removeServiceFromTableApi,
 } from "../api/table";
+import { PRODUCTS_QUERY_KEY } from "./useProduct";
+import { RECEIPT_QUERY_KEY } from "./useReceipt";
 
 export const TABLES_QUERY_KEY = {
   all: ["tables"],
@@ -148,6 +150,14 @@ export const useTableSession = (tableId: string) => {
       // Invalidate tất cả queries liên quan
       queryClient.invalidateQueries({
         queryKey: TABLES_QUERY_KEY.all,
+        refetchType: "all",
+      });
+      queryClient.invalidateQueries({
+        queryKey: PRODUCTS_QUERY_KEY.all,
+        refetchType: "all",
+      });
+      queryClient.invalidateQueries({
+        queryKey: RECEIPT_QUERY_KEY.all,
         refetchType: "all",
       });
     },

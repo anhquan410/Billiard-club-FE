@@ -48,7 +48,7 @@ function CreateUserForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const profileData = { ...formValue, password: "123456" };
-    console.log(profileData);
+    // console.log(profileData);
     createUser(profileData, {
       onSuccess: () => {
         setSnackbar({

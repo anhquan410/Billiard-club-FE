@@ -32,7 +32,7 @@ export const useProductPagination = (
 ) => {
   // const queryClient = useQueryClient();
 
-  const { data: paginatedProducts } = useQuery({
+  const { data: paginatedProducts, isLoading: isLoadingProducts } = useQuery({
     queryKey: PRODUCTS_QUERY_KEY.pagination(page, limit, category),
     queryFn: () => getProductsPagination(page, limit, category),
   });
@@ -43,13 +43,13 @@ export const useProductPagination = (
     enabled: !!id,
   });
 
-  return { paginatedProducts, product, isLoadingProduct };
+  return { paginatedProducts, product, isLoadingProducts, isLoadingProduct };
 };
 
 export const useProduct = (id?: string) => {
   const queryClient = useQueryClient();
 
-  const { data: products } = useQuery({
+  const { data: products, isLoading: isLoadingProducts } = useQuery({
     queryKey: PRODUCTS_QUERY_KEY.all,
     queryFn: getAllProducts,
   });
@@ -102,8 +102,9 @@ export const useProduct = (id?: string) => {
   return {
     products,
     product,
-    isLoadingProduct,
     updateProduct,
+    isLoadingProducts,
+    isLoadingProduct,
     isUpdatingProduct,
     createProduct,
     isCreatingProduct,

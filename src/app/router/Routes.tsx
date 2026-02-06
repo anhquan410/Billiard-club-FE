@@ -25,6 +25,7 @@ import ExportReceipts from "../../pages/WareHouse/Receipts/ExportReceipts";
 import CreateUserForm from "../../components/Form/CreateUserForm";
 import CreateProductForm from "../../components/Form/CreateProductForm";
 import TableDetailPage from "../../pages/Store/Table/TableDetailPage";
+import ReceiptForm from "../../components/Form/ReceiptForm";
 
 export const router = createBrowserRouter([
   {
@@ -56,6 +57,7 @@ export const router = createBrowserRouter([
                     path: "products/create-product",
                     element: <CreateProductForm />,
                   },
+                  { path: "import/create", element: <ReceiptForm /> },
                 ],
               },
               { path: "purchasing", element: <PurchasingPage /> },
@@ -82,7 +84,6 @@ export const router = createBrowserRouter([
           },
         ],
       },
-
       { path: "auth/login", element: <LoginForm /> },
       { path: "auth/register", element: <RegisterForm /> },
     ],

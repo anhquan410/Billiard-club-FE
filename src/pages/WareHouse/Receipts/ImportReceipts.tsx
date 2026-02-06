@@ -1,38 +1,87 @@
-import * as React from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import AddIcon from "@mui/icons-material/Add";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import SettingsIcon from "@mui/icons-material/Settings";
 import {
   Box,
   Button,
-  TextField,
-  Select,
-  MenuItem,
   FormControl,
+  IconButton,
+  MenuItem,
+  Pagination,
+  Paper,
+  Select,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
+  TextField,
   Typography,
-  IconButton,
 } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
-import SettingsIcon from "@mui/icons-material/Settings";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
-import type { ImportReceipt } from "../../libs/types/warehouse.type";
+import { format } from "date-fns";
+import * as React from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { useReceiptPagination } from "../../../libs/hooks/useReceipt";
+import { vi } from "date-fns/locale";
 
 export default function ImportReceipts() {
   const [searchText, setSearchText] = React.useState("");
   const [branch, setBranch] = React.useState("iBall");
-  const [warehouse, setWarehouse] = React.useState("all");
+  const [warehouse, setWarehouse] = React.useState("Kho iBall");
   const [status, setStatus] = React.useState("all");
-  const [category, setCategory] = React.useState("all");
+  const [category, setCategory] = React.useState("import");
   const [dateRange, setDateRange] = React.useState(
     "13/01/2026 00:01 → 13/01/2026 23:59",
   );
 
-  // Mock data (empty)
-  const receipts: ImportReceipt[] = [];
+  const [searchParams, setSearchParams] = useSearchParams();
+  const page = Number(searchParams.get("page")) || 1;
+  const limit = Number(searchParams.get("limit")) || 10;
+
+  const { paginatedStockMovements, isLoadingStockMovements } =
+    useReceiptPagination(page, limit, "IMPORT");
+
+  // Khi mount lần đầu, nếu chưa có page/limit trên URL thì set mặc định chỉ với page/limit
+  React.useEffect(() => {
+    if (!searchParams.get("page") || !searchParams.get("limit")) {
+      setSearchParams(
+        { page: page.toString(), limit: limit.toString(), type: "IMPORT" },
+        { replace: true },
+      );
+    }
+    // eslint-disable-next-line
+  }, []);
+
+  if (isLoadingStockMovements) {
+    return <div>Loading...</div>;
+  }
+
+  // Format ngày giờ theo định dạng Việt Nam
+  const formatVietnameseDateTime = (dateString: string) => {
+    return format(new Date(dateString), "dd/MM/yyyy HH:mm:ss", { locale: vi });
+  };
+
+  // Xử lý đổi trang
+  const handlePageChange = (_e: React.ChangeEvent<unknown>, value: number) => {
+    const params: Record<string, string> = {
+      page: value.toString(),
+      limit: limit.toString(),
+      type: "IMPORT",
+    };
+    setSearchParams(params);
+  };
+
+  // Xử lý đổi limit/trang
+  const handleLimitChange = (e: any) => {
+    const params: Record<string, string> = {
+      page: "1",
+      limit: e.target.value.toString(),
+      type: "IMPORT",
+    };
+    setSearchParams(params);
+  };
 
   return (
     <Box>
@@ -70,8 +119,10 @@ export default function ImportReceipts() {
               "&:hover": { bgcolor: "#ec407a" },
               textTransform: "none",
             }}
+            component={Link}
+            to="create"
           >
-            Thêm mới phiếu nhập
+            Thêm mới phiếu
           </Button>
         </Box>
 
@@ -101,13 +152,16 @@ export default function ImportReceipts() {
           placeholder="Mã phiếu xuất, mã hóa đơn"
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
-          sx={{ flexGrow: 1, minWidth: 150 }}
+          sx={{ flexGrow: 1, minWidth: 200 }}
         />
 
         <FormControl size="small" sx={{ minWidth: 150 }}>
-          <Select value={branch} onChange={(e) => setBranch(e.target.value)}>
+          <Select
+            value={branch}
+            onChange={(e) => setBranch(e.target.value)}
+            MenuProps={{ disableScrollLock: true }}
+          >
             <MenuItem value="iBall">iBall</MenuItem>
-            <MenuItem value="branch2">Chi nhánh 2</MenuItem>
           </Select>
         </FormControl>
 
@@ -116,10 +170,9 @@ export default function ImportReceipts() {
             value={warehouse}
             onChange={(e) => setWarehouse(e.target.value)}
             displayEmpty
+            MenuProps={{ disableScrollLock: true }}
           >
-            <MenuItem value="all">Chọn kho</MenuItem>
-            <MenuItem value="iball">Kho iBall</MenuItem>
-            <MenuItem value="main">Kho chính</MenuItem>
+            <MenuItem value="Kho iBall">Kho iBall</MenuItem>
           </Select>
         </FormControl>
 
@@ -128,6 +181,7 @@ export default function ImportReceipts() {
             value={status}
             onChange={(e) => setStatus(e.target.value)}
             displayEmpty
+            MenuProps={{ disableScrollLock: true }}
           >
             <MenuItem value="all">Trạng thái phiếu</MenuItem>
             <MenuItem value="completed">Hoàn thành</MenuItem>
@@ -141,10 +195,9 @@ export default function ImportReceipts() {
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             displayEmpty
+            MenuProps={{ disableScrollLock: true }}
           >
-            <MenuItem value="all">Phân loại</MenuItem>
             <MenuItem value="import">Nhập hàng</MenuItem>
-            <MenuItem value="return">Trả hàng</MenuItem>
           </Select>
         </FormControl>
 
@@ -173,20 +226,17 @@ export default function ImportReceipts() {
           <TableHead sx={{ bgcolor: "#f5f5f5" }}>
             <TableRow>
               <TableCell>STT</TableCell>
-              <TableCell>Mã</TableCell>
-              <TableCell>Chi nhánh</TableCell>
-              <TableCell>Kho nhập</TableCell>
+              <TableCell>Mã phiếu</TableCell>
+              <TableCell>Người tạo</TableCell>
               <TableCell>Ngày tạo</TableCell>
-              <TableCell>Tên nhà cung cấp</TableCell>
-              <TableCell>Phân loại</TableCell>
-              <TableCell>Tình trạng</TableCell>
-              <TableCell>Sản phẩm imei</TableCell>
-              <TableCell>Diễn giải</TableCell>
+              <TableCell>Sản phẩm </TableCell>
+              <TableCell>Số lượng</TableCell>
+              <TableCell>Tổng giá nhập</TableCell>
               <TableCell>Thao tác</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {receipts.length === 0 ? (
+            {paginatedStockMovements?.stockItems.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={11} align="center" sx={{ py: 8 }}>
                   <Box sx={{ textAlign: "center", color: "text.secondary" }}>
@@ -198,29 +248,69 @@ export default function ImportReceipts() {
                 </TableCell>
               </TableRow>
             ) : (
-              receipts.map((receipt, index) => (
-                <TableRow key={receipt.id} hover>
-                  <TableCell>{index + 1}</TableCell>
-                  <TableCell>{receipt.code}</TableCell>
-                  <TableCell>{receipt.branch}</TableCell>
-                  <TableCell>{receipt.importWarehouse}</TableCell>
-                  <TableCell>{receipt.createdDate}</TableCell>
-                  <TableCell>{receipt.supplier}</TableCell>
-                  <TableCell>{receipt.category}</TableCell>
-                  <TableCell>{receipt.status}</TableCell>
-                  <TableCell>{receipt.products.join(", ")}</TableCell>
-                  <TableCell>{receipt.note || "-"}</TableCell>
-                  <TableCell>
-                    <IconButton size="small">
-                      <MoreVertIcon />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))
+              paginatedStockMovements?.stockItems.map(
+                (receipt: any, index: number) => (
+                  <TableRow key={receipt.id} hover>
+                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>{receipt.id}</TableCell>
+                    <TableCell>{receipt.user.fullName}</TableCell>
+                    <TableCell>
+                      {formatVietnameseDateTime(receipt.createdAt)}
+                    </TableCell>
+                    <TableCell>{receipt.product.name}</TableCell>
+                    <TableCell>{receipt.quantity}</TableCell>
+                    <TableCell>
+                      {Number(receipt.totalValue).toLocaleString("vi-VN")}đ
+                    </TableCell>
+                    <TableCell>
+                      <IconButton size="small">
+                        <MoreVertIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ),
+              )
             )}
           </TableBody>
         </Table>
       </TableContainer>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          p: 2,
+          bgcolor: "white",
+          borderTop: "1px solid #e0e0e0",
+        }}
+      >
+        <Typography variant="body2" color="text.secondary">
+          1 - {limit} of {paginatedStockMovements?.total} items
+        </Typography>
+        <Pagination
+          count={Math.ceil(paginatedStockMovements?.total / limit)}
+          page={page}
+          onChange={handlePageChange}
+          color="primary"
+          sx={{
+            "& . Mui-selected": {
+              bgcolor: "#f06292 !important",
+              color: "white",
+            },
+          }}
+        />
+        <FormControl size="small" sx={{ minWidth: 120 }}>
+          <Select
+            value={limit}
+            onChange={handleLimitChange}
+            MenuProps={{ disableScrollLock: true }}
+          >
+            <MenuItem value={10}>10 / trang</MenuItem>
+            <MenuItem value={20}>20 / trang</MenuItem>
+            <MenuItem value={50}>50 / trang</MenuItem>
+          </Select>
+        </FormControl>
+      </Box>
     </Box>
   );
 }
