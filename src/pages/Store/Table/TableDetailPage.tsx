@@ -266,7 +266,7 @@ export default function TableDetailPage() {
                         <TableCell align="center">
                           <Chip
                             size="small"
-                            label={sessionData.session.staff.fullName}
+                            label={sessionData?.session?.staff?.fullName || "Admin"}
                           />
                         </TableCell>
                         <TableCell align="center">

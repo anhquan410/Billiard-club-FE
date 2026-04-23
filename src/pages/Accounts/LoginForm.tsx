@@ -16,7 +16,7 @@ import { useAccount } from "../../libs/hooks/useAccount";
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [credentials, setCredentials] = useState({
-    email: "",
+    emailOrPhone: "",
     password: "",
   });
 
@@ -85,8 +85,8 @@ export default function LoginPage() {
           <TextField
             autoFocus
             fullWidth
-            name="email"
-            placeholder="Email"
+            name="emailOrPhone"
+            placeholder="Email hoặc Số điện thoại"
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -94,7 +94,7 @@ export default function LoginPage() {
                 </InputAdornment>
               ),
             }}
-            value={credentials.email}
+            value={credentials.emailOrPhone}
             onChange={handleChange}
             sx={{ background: "#f4f8fd", mb: 2 }}
           />

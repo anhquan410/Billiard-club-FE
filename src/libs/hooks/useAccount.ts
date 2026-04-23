@@ -13,7 +13,10 @@ export const useAccount = () => {
   const navigate = useNavigate();
 
   const loginUser = useMutation({
-    mutationFn: async (credentials: { email: string; password: string }) => {
+    mutationFn: async (credentials: {
+      emailOrPhone: string;
+      password: string;
+    }) => {
       const response = await agent.post("auth/login", credentials);
       // Lưu access_token vào localStorage
       if (response.data?.access_token) {

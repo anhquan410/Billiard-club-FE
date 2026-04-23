@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -98,8 +99,59 @@ export const useTableSession = (tableId: string) => {
         productId: string;
         quantity: number;
       }) => addServiceToTableApi(sessionId, productId, quantity),
-      onSuccess: () => {
-        // Invalidate session query để refetch services
+      // Optimistic update
+      onMutate: async ({ sessionId, productId, quantity }) => {
+        await queryClient.cancelQueries({
+          queryKey: [...TABLES_QUERY_KEY.table(tableId), "session"],
+        });
+        const previousData = queryClient.getQueryData<any>([
+          ...TABLES_QUERY_KEY.table(tableId),
+          "session",
+        ]);
+
+        // Tạo service mới tạm thời
+        const newService = {
+          id: Math.random().toString(36).substring(2), // id tạm
+          product: previousData?.products?.find(
+            (p: any) => p.id === productId,
+          ) || { id: productId, name: "Đang tải...", unit: "", price: 0 },
+          price:
+            previousData?.products?.find((p: any) => p.id === productId)
+              ?.price || 0,
+          quantity,
+          subtotal:
+            (previousData?.products?.find((p: any) => p.id === productId)
+              ?.price || 0) * quantity,
+          elapsed: "",
+        };
+
+        // Cập nhật optimistic
+        queryClient.setQueryData<any>(
+          [...TABLES_QUERY_KEY.table(tableId), "session"],
+          (old: any) => {
+            if (!old) return old;
+            return {
+              ...old,
+              session: {
+                ...old.session,
+                services: [...(old.session?.services || []), newService],
+              },
+            };
+          },
+        );
+        return { previousData };
+      },
+      onError: (_err, _variables, context) => {
+        // Quay lại dữ liệu cũ nếu lỗi
+        if (context?.previousData) {
+          queryClient.setQueryData(
+            [...TABLES_QUERY_KEY.table(tableId), "session"],
+            context.previousData,
+          );
+        }
+      },
+      onSettled: () => {
+        // Luôn refetch lại dữ liệu thật
         queryClient.invalidateQueries({
           queryKey: TABLES_QUERY_KEY.all,
           refetchType: "all",
