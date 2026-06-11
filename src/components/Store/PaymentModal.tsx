@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useState } from "react";
 import {
   Dialog,
@@ -126,7 +127,9 @@ export default function PaymentModal({
       onClose();
       navigate("/store");
     } catch (error) {
-      showError(getApiErrorMessage(error, "Thanh toán thất bại. Vui lòng thử lại!"));
+      showError(
+        getApiErrorMessage(error, "Thanh toán thất bại. Vui lòng thử lại!"),
+      );
       console.error("Payment failed:", error);
     }
   };
@@ -156,8 +159,15 @@ export default function PaymentModal({
             />
 
             {customerId && bonusProfile && (
-              <Alert severity="info" sx={{ mb: 2 }}>
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, alignItems: "center" }}>
+              <Alert severity="success" sx={{ mb: 2 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 10,
+                    alignItems: "center",
+                  }}
+                >
                   <Typography variant="body2" fontWeight={600}>
                     {bonusProfile.fullName}
                   </Typography>
@@ -185,7 +195,7 @@ export default function PaymentModal({
                 Phương thức <span style={{ color: "red" }}>*</span>
               </Typography>
 
-              <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
+              <Box display="flex" alignItems="center" gap={3} flexWrap="wrap">
                 <Select
                   value={paymentMethod}
                   onChange={(e) =>
@@ -207,19 +217,18 @@ export default function PaymentModal({
                   InputProps={{ readOnly: true }}
                   sx={{ maxWidth: 180 }}
                 />
-                <TextField
-                  label="Giảm giá (VNĐ)"
-                  size="small"
-                  type="number"
-                  value={discount || ""}
-                  onChange={(e) => setDiscount(Number(e.target.value) || 0)}
-                  sx={{ maxWidth: 180 }}
-                />
               </Box>
             </Box>
 
             {customerId && bonusProfile && (
-              <Box sx={{ mb: 2, display: "flex", flexDirection: "column", gap: 1.5 }}>
+              <Box
+                sx={{
+                  mb: 2,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 1.5,
+                }}
+              >
                 <FormControlLabel
                   control={
                     <Checkbox
@@ -233,7 +242,6 @@ export default function PaymentModal({
                 <TextField
                   label="Dùng điểm thưởng"
                   size="small"
-                  type="number"
                   value={bonusPointsToUse || ""}
                   onChange={(e) => {
                     const val = Number(e.target.value) || 0;
@@ -247,7 +255,8 @@ export default function PaymentModal({
                   }
                   inputProps={{
                     min: 0,
-                    max: bonusPreview?.maxUsablePoints ?? bonusProfile.bonusPoints,
+                    max:
+                      bonusPreview?.maxUsablePoints ?? bonusProfile.bonusPoints,
                   }}
                   sx={{ maxWidth: 280 }}
                 />
@@ -258,7 +267,7 @@ export default function PaymentModal({
               label="Ghi chú"
               fullWidth
               size="small"
-              sx={{ mt: 1 }}
+              sx={{ mt: 1, mb: 5 }}
               value={note}
               onChange={(e) => setNote(e.target.value)}
             />
@@ -275,23 +284,29 @@ export default function PaymentModal({
               }}
             >
               <Divider sx={{ width: "100%", mb: 1 }} />
-              <Box sx={{ width: "100%" }}>
+              <Box sx={{ width: "100%", pl: 2 }}>
                 <Typography variant="body2" color="text.secondary">
                   Tạm tính: {amountBeforeBonus.toLocaleString("vi-VN")} đ
                 </Typography>
                 {bonusPreview && bonusPreview.tierDiscount > 0 && (
                   <Typography variant="body2" color="success.main">
-                    Giảm hạng: -{bonusPreview.tierDiscount.toLocaleString("vi-VN")} đ
+                    Giảm hạng: -
+                    {bonusPreview.tierDiscount.toLocaleString("vi-VN")} đ
                   </Typography>
                 )}
                 {bonusPreview && bonusPreview.pointsDiscount > 0 && (
                   <Typography variant="body2" color="success.main">
-                    Giảm điểm: -{bonusPreview.pointsDiscount.toLocaleString("vi-VN")} đ
+                    Giảm điểm: -
+                    {bonusPreview.pointsDiscount.toLocaleString("vi-VN")} đ
                   </Typography>
                 )}
                 {customerId && pointsToEarn > 0 && (
-                  <Typography variant="body2" color="primary.main" sx={{ mt: 1 }}>
-                    Dự kiến tích: +{pointsToEarn} điểm
+                  <Typography
+                    variant="body2"
+                    color="primary.main"
+                    sx={{ mt: 1 }}
+                  >
+                    Dự kiến tích: + {pointsToEarn} điểm
                   </Typography>
                 )}
               </Box>

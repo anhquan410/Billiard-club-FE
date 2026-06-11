@@ -2,6 +2,9 @@ export type ProductStatus = "AVAILABLE" | "OUT_OF_STOCK" | "DISCONTINUED";
 export type ProductCategory =
   | "FOOD"
   | "BEVERAGE"
+  | "SODA"
+  | "BEER"
+  | "COFFEE"
   | "EQUIPMENT"
   | "SERVICE"
   | "CIGARETTE"
@@ -40,7 +43,8 @@ export type ProductItem = {
   minStock: number;
   unit: string;
   status: ProductStatus;
-  image: string;
+  image?: string;
+  imageUrl?: string | null;
 };
 
 export type ProductCreateRequest = {

@@ -61,8 +61,14 @@ export const useProduct = (id?: string) => {
   });
 
   const { mutate: createProduct, isPending: isCreatingProduct } = useMutation({
-    mutationFn: ({ product }: { product: ProductCreateRequest }) => {
-      return createProductApi(product);
+    mutationFn: ({
+      product,
+      imageFile,
+    }: {
+      product: ProductCreateRequest;
+      imageFile?: File;
+    }) => {
+      return createProductApi(product, imageFile);
     },
     onSuccess: (_, _variables) => {
       // Invalidate all queries related to products
@@ -74,8 +80,16 @@ export const useProduct = (id?: string) => {
   });
 
   const { mutate: updateProduct, isPending: isUpdatingProduct } = useMutation({
-    mutationFn: ({ id, product }: { id: string; product: ProductItem }) => {
-      return updateProductByIdApi(id, product);
+    mutationFn: ({
+      id,
+      product,
+      imageFile,
+    }: {
+      id: string;
+      product: ProductItem;
+      imageFile?: File;
+    }) => {
+      return updateProductByIdApi(id, product, imageFile);
     },
     onSuccess: (_, _variables) => {
       // Invalidate all queries related to products

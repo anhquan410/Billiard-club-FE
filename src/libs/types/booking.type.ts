@@ -21,6 +21,7 @@ export type TableBooking = {
   status: BookingStatus;
   createdAt: string;
   confirmedBy?: string;
+  hasCheckedIn?: boolean;
   canCancel?: boolean;
 };
 

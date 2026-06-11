@@ -86,8 +86,47 @@ export const useTable = (id?: string) => {
 export const useTableSession = (tableId: string) => {
   const queryClient = useQueryClient();
 
+  const sessionQueryKey = [...TABLES_QUERY_KEY.table(tableId), "session"];
+
+  const refreshStoreTableList = () => {
+    queryClient.invalidateQueries({
+      queryKey: TABLES_QUERY_KEY.all,
+      exact: true,
+      refetchType: "active",
+    });
+  };
+
+  const patchSessionServices = (
+    old: any,
+    updater: (services: any[]) => any[],
+  ) => {
+    if (!old?.session?.services) return old;
+
+    const services = updater(old.session.services);
+    const servicesTotal =
+      Math.round(
+        services.reduce((sum: number, s: any) => sum + Number(s.subtotal), 0) *
+          100,
+      ) / 100;
+    const currentTablePrice = Number(old.currentTablePrice || 0);
+
+    return {
+      ...old,
+      servicesTotal,
+      estimatedTotal:
+        Math.round((currentTablePrice + servicesTotal) * 100) / 100,
+      session: {
+        ...old.session,
+        services,
+      },
+    };
+  };
+
+  const matchesServiceProduct = (service: any, productId: string) =>
+    service.productId === productId || service.product?.id === productId;
+
   const { data: sessionData, isLoading: isLoadingSession } = useQuery({
-    queryKey: [...TABLES_QUERY_KEY.table(tableId), "session"],
+    queryKey: sessionQueryKey,
     queryFn: () => getTableSession(tableId),
     enabled: !!tableId && tableId !== "", // Chỉ fetch khi có tableId hợp lệ
     refetchOnWindowFocus: true,
@@ -106,63 +145,69 @@ export const useTableSession = (tableId: string) => {
         productId: string;
         quantity: number;
       }) => addServiceToTableApi(sessionId, productId, quantity),
-      // Optimistic update
-      onMutate: async ({ sessionId, productId, quantity }) => {
-        await queryClient.cancelQueries({
-          queryKey: [...TABLES_QUERY_KEY.table(tableId), "session"],
+      onMutate: async ({ productId, quantity }) => {
+        await queryClient.cancelQueries({ queryKey: sessionQueryKey });
+        const previousData = queryClient.getQueryData<any>(sessionQueryKey);
+
+        const products =
+          queryClient.getQueryData<any[]>(PRODUCTS_QUERY_KEY.all) ?? [];
+        const product = products.find((p) => p.id === productId);
+        const unitPrice = product ? Number(product.price) : 0;
+
+        queryClient.setQueryData<any>(sessionQueryKey, (old: any) => {
+          if (!old?.session) return old;
+
+          const services = old.session.services || [];
+          const existing = services.find((s: any) =>
+            matchesServiceProduct(s, productId),
+          );
+
+          if (existing) {
+            const nextQty = existing.quantity + quantity;
+            return patchSessionServices(old, (svcs) =>
+              svcs.map((s: any) =>
+                matchesServiceProduct(s, productId)
+                  ? {
+                      ...s,
+                      quantity: nextQty,
+                      subtotal: Number(s.price) * nextQty,
+                    }
+                  : s,
+              ),
+            );
+          }
+
+          const newService = {
+            id: `temp-${productId}`,
+            productId,
+            product: product
+              ? {
+                  id: product.id,
+                  name: product.name,
+                  unit: product.unit ?? "",
+                }
+              : { id: productId, name: "Đang tải...", unit: "" },
+            price: unitPrice,
+            quantity,
+            subtotal: unitPrice * quantity,
+            elapsed: "",
+          };
+
+          return patchSessionServices(old, (svcs) => [...svcs, newService]);
         });
-        const previousData = queryClient.getQueryData<any>([
-          ...TABLES_QUERY_KEY.table(tableId),
-          "session",
-        ]);
 
-        // Tạo service mới tạm thời
-        const newService = {
-          id: Math.random().toString(36).substring(2), // id tạm
-          product: previousData?.products?.find(
-            (p: any) => p.id === productId,
-          ) || { id: productId, name: "Đang tải...", unit: "", price: 0 },
-          price:
-            previousData?.products?.find((p: any) => p.id === productId)
-              ?.price || 0,
-          quantity,
-          subtotal:
-            (previousData?.products?.find((p: any) => p.id === productId)
-              ?.price || 0) * quantity,
-          elapsed: "",
-        };
-
-        // Cập nhật optimistic
-        queryClient.setQueryData<any>(
-          [...TABLES_QUERY_KEY.table(tableId), "session"],
-          (old: any) => {
-            if (!old) return old;
-            return {
-              ...old,
-              session: {
-                ...old.session,
-                services: [...(old.session?.services || []), newService],
-              },
-            };
-          },
-        );
         return { previousData };
       },
       onError: (_err, _variables, context) => {
-        // Quay lại dữ liệu cũ nếu lỗi
         if (context?.previousData) {
-          queryClient.setQueryData(
-            [...TABLES_QUERY_KEY.table(tableId), "session"],
-            context.previousData,
-          );
+          queryClient.setQueryData(sessionQueryKey, context.previousData);
         }
       },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: sessionQueryKey });
+      },
       onSettled: () => {
-        // Luôn refetch lại dữ liệu thật
-        queryClient.invalidateQueries({
-          queryKey: TABLES_QUERY_KEY.all,
-          refetchType: "all",
-        });
+        refreshStoreTableList();
       },
     });
 
@@ -179,11 +224,36 @@ export const useTableSession = (tableId: string) => {
       serviceId: string;
       quantity: number;
     }) => updateServiceQuantityApi(sessionId, serviceId, quantity),
+    onMutate: async ({ serviceId, quantity }) => {
+      await queryClient.cancelQueries({ queryKey: sessionQueryKey });
+      const previousData = queryClient.getQueryData<any>(sessionQueryKey);
+
+      queryClient.setQueryData<any>(sessionQueryKey, (old: any) =>
+        patchSessionServices(old, (services) => {
+          if (quantity <= 0) {
+            return services.filter((s: any) => s.id !== serviceId);
+          }
+          return services.map((s: any) =>
+            s.id === serviceId
+              ? {
+                  ...s,
+                  quantity,
+                  subtotal: Number(s.price) * quantity,
+                }
+              : s,
+          );
+        }),
+      );
+
+      return { previousData };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(sessionQueryKey, context.previousData);
+      }
+    },
     onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: TABLES_QUERY_KEY.all,
-        refetchType: "all",
-      });
+      refreshStoreTableList();
     },
   });
 
@@ -200,12 +270,25 @@ export const useTableSession = (tableId: string) => {
     }) => {
       return removeServiceFromTableApi(sessionId, serviceId);
     },
-    onSuccess: () => {
-      // Invalidate session query để refetch services
-      queryClient.invalidateQueries({
-        queryKey: TABLES_QUERY_KEY.all,
-        refetchType: "all",
-      });
+    onMutate: async ({ serviceId }) => {
+      await queryClient.cancelQueries({ queryKey: sessionQueryKey });
+      const previousData = queryClient.getQueryData<any>(sessionQueryKey);
+
+      queryClient.setQueryData<any>(sessionQueryKey, (old: any) =>
+        patchSessionServices(old, (services) =>
+          services.filter((s: any) => s.id !== serviceId),
+        ),
+      );
+
+      return { previousData };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(sessionQueryKey, context.previousData);
+      }
+    },
+    onSettled: () => {
+      refreshStoreTableList();
     },
   });
 

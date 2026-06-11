@@ -105,11 +105,13 @@ export default function StorePage() {
       return;
     }
 
-    // Bàn AVAILABLE: walk-in, mở bàn trực tiếp
+    // Bàn AVAILABLE: walk-in (đặt bàn tương lai vẫn cho phép nếu chưa vào khung giữ chỗ)
     try {
       const sessionData = await startTableSessionAsync({
         tableId: table.id,
-        note: "",
+        note: table.upcomingBooking
+          ? `Walk-in (có đặt ${table.upcomingBooking.startTime} sau)`
+          : "",
       });
 
       showSuccess("Mở bàn thành công!");

@@ -40,13 +40,18 @@ export default function TableCard({ table, onOpenOrder }: TableCardProps) {
         <Typography variant="h6" fontWeight="bold" sx={{ mb: 0.5 }}>
           {table.tableName}
         </Typography>
-        <Typography variant="caption" sx={{ opacity: 0.9 }}>
+        <Typography variant="caption" sx={{ opacity: 0.9, fontSize: "15px", fontWeight: "bold" }}>
           {table.status === "AVAILABLE"
             ? "Trống"
             : table.status === "OCCUPIED"
               ? "Đang sử dụng"
-              : "Đã đặt trước"}
+              : "Bàn đặt"}
         </Typography>
+        {table.status === "AVAILABLE" && table.upcomingBooking && (
+          <Typography variant="caption" sx={{ display: "block", mt: 0.5, opacity: 0.95 }}>
+            Đặt {table.upcomingBooking.startTime}–{table.upcomingBooking.endTime}
+          </Typography>
+        )}
         <Box sx={{ mt: 2, fontSize: "13px" }}>
           {customerLabel && (
             <Typography variant="body2" sx={{ mb: 0.5 }}>

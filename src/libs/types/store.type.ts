@@ -1,5 +1,12 @@
 export type tableStatus = "AVAILABLE" | "OCCUPIED" | "RESERVED";
 
+export type UpcomingBooking = {
+  id: string;
+  customerName: string;
+  startTime: string;
+  endTime: string;
+};
+
 export type TableData = {
   id: string;
   tableNumber: string;
@@ -9,6 +16,7 @@ export type TableData = {
   description?: string;
   customerName?: string;
   estimatedTotal?: number;
+  upcomingBooking?: UpcomingBooking;
 };
 
 export type Order = {

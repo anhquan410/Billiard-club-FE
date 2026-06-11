@@ -395,32 +395,42 @@ export default function BookingPage() {
                               </IconButton>
                             </Box>
                           )}
-                          {booking.status === "CONFIRMED" && (
-                            <Box
-                              sx={{
-                                display: "flex",
-                                justifyContent: "center",
-                                gap: 0.5,
-                              }}
-                            >
-                              <IconButton
+                          {booking.status === "CONFIRMED" &&
+                            booking.hasCheckedIn && (
+                              <Chip
+                                label="Đã check-in"
                                 size="small"
-                                color="warning"
-                                title="Khách không đến"
-                                onClick={() => handleNoShow(booking.id)}
+                                color="info"
+                                variant="outlined"
+                              />
+                            )}
+                          {booking.status === "CONFIRMED" &&
+                            !booking.hasCheckedIn && (
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  justifyContent: "center",
+                                  gap: 0.5,
+                                }}
                               >
-                                <PersonOffIcon fontSize="small" />
-                              </IconButton>
-                              <IconButton
-                                size="small"
-                                color="error"
-                                title="Hủy đặt bàn"
-                                onClick={() => handleCancel(booking.id)}
-                              >
-                                <CancelIcon fontSize="small" />
-                              </IconButton>
-                            </Box>
-                          )}
+                                <IconButton
+                                  size="small"
+                                  color="warning"
+                                  title="Khách không đến"
+                                  onClick={() => handleNoShow(booking.id)}
+                                >
+                                  <PersonOffIcon fontSize="small" />
+                                </IconButton>
+                                <IconButton
+                                  size="small"
+                                  color="error"
+                                  title="Hủy đặt bàn"
+                                  onClick={() => handleCancel(booking.id)}
+                                >
+                                  <CancelIcon fontSize="small" />
+                                </IconButton>
+                              </Box>
+                            )}
                         </TableCell>
                       </TableRow>
                     ))

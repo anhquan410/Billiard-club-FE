@@ -44,6 +44,7 @@ import DeleteProductDialog from "../../../components/WareHouse/DeleteProductDial
 import { getCategoryLabel } from "../../../libs/utils/productLabels";
 import { useSnackbar } from "../../../libs/context/SnackbarContext";
 import PageLoader from "../../../components/common/PageLoader";
+import { getProductImageUrl } from "../../../libs/utils/productImage";
 
 export default function ProductManagementPage() {
   const navigate = useNavigate();
@@ -361,6 +362,7 @@ export default function ProductManagementPage() {
                     <TableCell>{index + 1}</TableCell>
                     <TableCell>
                       <Avatar
+                        src={getProductImageUrl(product.imageUrl) ?? undefined}
                         sx={{
                           width: 60,
                           height: 60,
@@ -369,7 +371,7 @@ export default function ProductManagementPage() {
                           borderRadius: 2,
                         }}
                       >
-                        {product.image}
+                        {!product.imageUrl && (product.image || "📦")}
                       </Avatar>
                     </TableCell>
                     <TableCell>

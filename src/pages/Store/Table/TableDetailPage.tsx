@@ -25,12 +25,12 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import PageLoader from "../../../components/common/PageLoader";
 import AddIcon from "@mui/icons-material/Add";
+import RemoveIcon from "@mui/icons-material/Remove";
 import PrintIcon from "@mui/icons-material/Print";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useProduct } from "../../../libs/hooks/useProduct";
-import RemoveIcon from "@mui/icons-material/Remove";
 import type { ProductItem } from "../../../libs/types/warehouse.type";
 import { useParams } from "react-router-dom";
 import { useTable, useTableSession } from "../../../libs/hooks/useTable";
@@ -40,16 +40,49 @@ import FindCustomerDialog, {
 } from "../../../components/Store/FindCustomerDialog";
 import AddCustomerDialog from "../../../components/Store/AddCustomerDialog";
 import { useSnackbar } from "../../../libs/context/SnackbarContext";
+import {
+  matchesStoreProductCategory,
+  STORE_PRODUCT_CATEGORIES,
+} from "../../../libs/utils/productCategories";
+import type { ProductCategory } from "../../../libs/types/warehouse.type";
+
+const quantityFieldSx = {
+  width: 88,
+  minWidth: 88,
+  "& .MuiInputBase-input": {
+    textAlign: "center",
+    py: 0.75,
+    px: 1,
+  },
+  "& input[type=number]": {
+    MozAppearance: "textfield",
+  },
+  "& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button":
+    {
+      WebkitAppearance: "none",
+      margin: 0,
+    },
+};
+
+const quantityInputProps = {
+  min: 1,
+  step: 1,
+};
 
 export default function TableDetailPage() {
   const [productTab, setProductTab] = useState(0);
-  const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
+  const [selectedCategory, setSelectedCategory] = useState<
+    ProductCategory | "ALL"
+  >("ALL");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [open, setOpen] = useState(false);
   const [openFindCustomer, setOpenFindCustomer] = useState(false);
   const [openAddCustomer, setOpenAddCustomer] = useState(false);
+  const [quantityDrafts, setQuantityDrafts] = useState<Record<string, string>>(
+    {},
+  );
   const { products } = useProduct();
   const { showSuccess, showError } = useSnackbar();
   const { id } = useParams<{ id: string }>();
@@ -145,15 +178,10 @@ export default function TableDetailPage() {
     );
   };
 
-  const handleUpdateQuantity = (
-    serviceId: string,
-    currentQty: number,
-    delta: number,
-  ) => {
+  const setServiceQuantity = (serviceId: string, quantity: number) => {
     if (!sessionData?.session) return;
 
-    const newQty = currentQty + delta;
-    if (newQty <= 0) {
+    if (quantity <= 0) {
       handleRemoveService(serviceId);
       return;
     }
@@ -162,7 +190,7 @@ export default function TableDetailPage() {
       {
         sessionId: sessionData.session.id,
         serviceId,
-        quantity: newQty,
+        quantity,
       },
       {
         onError: () => {
@@ -170,6 +198,41 @@ export default function TableDetailPage() {
         },
       },
     );
+  };
+
+  const handleUpdateQuantity = (
+    serviceId: string,
+    currentQty: number,
+    delta: number,
+  ) => {
+    setServiceQuantity(serviceId, currentQty + delta);
+  };
+
+  const getQuantityDisplay = (serviceId: string, quantity: number) =>
+    quantityDrafts[serviceId] ?? String(quantity);
+
+  const handleQuantityInputChange = (serviceId: string, value: string) => {
+    if (value === "" || /^\d+$/.test(value)) {
+      setQuantityDrafts((prev) => ({ ...prev, [serviceId]: value }));
+    }
+  };
+
+  const commitQuantityInput = (serviceId: string, currentQty: number) => {
+    const draft = quantityDrafts[serviceId];
+    setQuantityDrafts((prev) => {
+      const next = { ...prev };
+      delete next[serviceId];
+      return next;
+    });
+
+    if (draft === undefined) return;
+
+    const parsed = parseInt(draft, 10);
+    if (draft === "" || Number.isNaN(parsed)) return;
+
+    if (parsed !== currentQty) {
+      setServiceQuantity(serviceId, parsed);
+    }
   };
 
   if (isLoadingTable || isLoadingSession) {
@@ -286,22 +349,14 @@ export default function TableDetailPage() {
                         </Typography>
                       </TableCell>
                       <TableCell align="center">
-                        <Box
-                          display="flex"
-                          alignItems="center"
-                          gap={1}
-                          justifyContent="center"
-                        >
-                          <TextField
-                            size="small"
-                            value={1}
-                            type="number"
-                            disabled
-                            inputProps={{
-                              style: { width: 36, textAlign: "center" },
-                            }}
-                          />
-                        </Box>
+                        <TextField
+                          size="small"
+                          value={1}
+                          type="number"
+                          slotProps={{ input: { readOnly: true } }}
+                          sx={quantityFieldSx}
+                          inputProps={quantityInputProps}
+                        />
                       </TableCell>
                       <TableCell align="center" sx={{ fontWeight: 500 }}>
                         {table?.hourlyRate?.toLocaleString()}
@@ -323,8 +378,8 @@ export default function TableDetailPage() {
                     </TableRow>
 
                     {/* Danh sách sản phẩm/dịch vụ */}
-                    {service.map((item: any, idx: number) => (
-                      <TableRow key={idx}>
+                    {service.map((item: any) => (
+                      <TableRow key={item.id}>
                         <TableCell>
                           <Typography fontWeight={500}>
                             {item.product.name}
@@ -355,7 +410,7 @@ export default function TableDetailPage() {
                           <Box
                             display="flex"
                             alignItems="center"
-                            gap={1}
+                            gap={0.5}
                             justifyContent="center"
                           >
                             <IconButton
@@ -369,16 +424,29 @@ export default function TableDetailPage() {
                                 )
                               }
                             >
-                              <RemoveIcon />
+                              <RemoveIcon fontSize="small" />
                             </IconButton>
                             <TextField
                               size="small"
-                              value={item.quantity}
+                              value={getQuantityDisplay(item.id, item.quantity)}
                               type="number"
-                              disabled
-                              inputProps={{
-                                style: { width: 36, textAlign: "center" },
+                              disabled={isUpdatingServiceQuantity}
+                              onChange={(e) =>
+                                handleQuantityInputChange(
+                                  item.id,
+                                  e.target.value,
+                                )
+                              }
+                              onBlur={() =>
+                                commitQuantityInput(item.id, item.quantity)
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.currentTarget.blur();
+                                }
                               }}
+                              sx={quantityFieldSx}
+                              inputProps={quantityInputProps}
                             />
                             <IconButton
                               size="small"
@@ -387,7 +455,7 @@ export default function TableDetailPage() {
                                 handleUpdateQuantity(item.id, item.quantity, 1)
                               }
                             >
-                              <AddIcon />
+                              <AddIcon fontSize="small" />
                             </IconButton>
                           </Box>
                         </TableCell>
@@ -550,7 +618,7 @@ export default function TableDetailPage() {
                 value={productTab}
                 onChange={(_, val) => {
                   setProductTab(val);
-                  setSelectedCategory(val === 0 ? "ALL" : "EQUIPMENT");
+                  setSelectedCategory(val === 0 ? "ALL" : "SERVICE");
                 }}
                 sx={{ minHeight: 36 }}
               >
@@ -558,23 +626,21 @@ export default function TableDetailPage() {
                 <Tab label="Dịch vụ" />
               </Tabs>
               <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", my: 1 }}>
-                {[
-                  { label: "Tất cả", value: "ALL" },
-                  { label: "Đồ ăn", value: "FOOD" },
-                  { label: "Bia", value: "BEER" },
-                  { label: "Nước ngọt có gas", value: "SODA" },
-                  { label: "Nước ngọt không gas", value: "BEVERAGE" },
-                  { label: "Thuốc lá", value: "CIGARETTE" },
-                  { label: "Cà phê", value: "COFFEE" },
-                  { label: "Khác", value: "OTHER" },
-                ].map((cat, i) => (
+                {(productTab === 0
+                  ? STORE_PRODUCT_CATEGORIES
+                  : [{ label: "Dịch vụ", value: "SERVICE" as const }]
+                ).map((cat) => (
                   <Button
-                    key={i}
+                    key={cat.value}
                     variant="outlined"
                     size="small"
                     onClick={() => {
                       setSelectedCategory(cat.value);
-                      setProductTab(0);
+                      if (cat.value !== "SERVICE") {
+                        setProductTab(0);
+                      } else {
+                        setProductTab(1);
+                      }
                     }}
                     sx={{
                       borderRadius: 5,
@@ -599,11 +665,10 @@ export default function TableDetailPage() {
               <Box sx={{ maxHeight: 370, overflowY: "auto", pr: 1 }}>
                 {products
                   ?.filter((p: ProductItem) => {
-                    // Filter by category
-                    const categoryMatch =
-                      selectedCategory === "ALL" ||
-                      p.category === selectedCategory;
-                    // Filter by search term
+                    const categoryMatch = matchesStoreProductCategory(
+                      p,
+                      selectedCategory,
+                    );
                     const searchMatch =
                       searchTerm === "" ||
                       p.name.toLowerCase().includes(searchTerm.toLowerCase());

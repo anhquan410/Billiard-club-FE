@@ -277,7 +277,7 @@ export default function ReportPage() {
           </Grid>
           <ReportDataTable
             title="Chi tiết doanh thu theo ngày"
-            rows={data.revenueByDay}
+            rows={[...data.revenueByDay].reverse()}
             columns={[
               { key: "date", label: "Ngày", render: (r) => r.date },
               {

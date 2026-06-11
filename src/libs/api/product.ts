@@ -4,6 +4,26 @@ import type {
 } from "../types/warehouse.type";
 import agent from "./agent";
 
+function appendProductFields(formData: FormData, data: Record<string, unknown>) {
+  Object.entries(data).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      formData.append(key, String(value));
+    }
+  });
+}
+
+function buildProductFormData(
+  data: Record<string, unknown>,
+  imageFile?: File,
+): FormData {
+  const formData = new FormData();
+  appendProductFields(formData, data);
+  if (imageFile) {
+    formData.append("image", imageFile);
+  }
+  return formData;
+}
+
 export async function getAllProducts() {
   try {
     const response = await agent.get(`/products/all`);
@@ -42,11 +62,19 @@ export async function getProductById(id: string) {
   }
 }
 
-export async function createProduct(productData: ProductCreateRequest) {
+export async function createProduct(
+  productData: ProductCreateRequest,
+  imageFile?: File,
+) {
   try {
+    const payload = buildProductFormData(
+      productData as unknown as Record<string, unknown>,
+      imageFile,
+    );
     const response = await agent.post<ProductCreateRequest>(
       `/products`,
-      productData,
+      payload,
+      { headers: { "Content-Type": "multipart/form-data" } },
     );
     return response.data;
   } catch (error) {
@@ -55,11 +83,22 @@ export async function createProduct(productData: ProductCreateRequest) {
   }
 }
 
-export async function updateProductById(id: string, productData: ProductItem) {
+export async function updateProductById(
+  id: string,
+  productData: ProductItem,
+  imageFile?: File,
+) {
   try {
+    const { id: _id, image: _image, imageUrl: _imageUrl, ...fields } =
+      productData;
+    const payload = buildProductFormData(
+      fields as unknown as Record<string, unknown>,
+      imageFile,
+    );
     const response = await agent.patch<ProductItem>(
       `/products/${id}`,
-      productData,
+      payload,
+      { headers: { "Content-Type": "multipart/form-data" } },
     );
     return response.data;
   } catch (error) {

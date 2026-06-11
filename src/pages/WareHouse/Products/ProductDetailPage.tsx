@@ -17,6 +17,7 @@ import { useAccount } from "../../../libs/hooks/useAccount";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useSnackbar } from "../../../libs/context/SnackbarContext";
 import PageLoader from "../../../components/common/PageLoader";
+import ProductImagePicker from "../../../components/WareHouse/ProductImagePicker";
 
 function ProductDetailPage() {
   const navigate = useNavigate();
@@ -25,6 +26,7 @@ function ProductDetailPage() {
   const { product, isLoadingProduct, updateProduct } = useProduct(id);
   const isEditable = user?.role === "ADMIN";
   const { showSuccess, showError } = useSnackbar();
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   // Form State
   const [formValue, setFormValue] = useState({
@@ -66,11 +68,10 @@ function ProductDetailPage() {
       stock: product.stock,
       minStock: product.minStock,
       unit: formValue.unit,
-      image: product.image,
-      // Add any other required fields from ProductItem here if needed
+      imageUrl: product.imageUrl,
     };
     updateProduct(
-      { id: id as string, product: productData },
+      { id: id as string, product: productData, imageFile: imageFile ?? undefined },
       {
         onSuccess: () => {
           showSuccess("Cập nhật sản phẩm thành công!");
@@ -108,6 +109,10 @@ function ProductDetailPage() {
           gap={3}
           onSubmit={handleSubmit}
         >
+          <ProductImagePicker
+            currentImageUrl={product.imageUrl}
+            onFileSelect={setImageFile}
+          />
           <TextField
             name="name"
             label="Tên sản phẩm"
