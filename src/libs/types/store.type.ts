@@ -7,6 +7,8 @@ export type TableData = {
   hourlyRate: number;
   status: tableStatus;
   description?: string;
+  customerName?: string;
+  estimatedTotal?: number;
 };
 
 export type Order = {

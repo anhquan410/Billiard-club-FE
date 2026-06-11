@@ -35,9 +35,11 @@ import type { ProductItem } from "../../../libs/types/warehouse.type";
 import { useParams } from "react-router-dom";
 import { useTable, useTableSession } from "../../../libs/hooks/useTable";
 import PaymentModal from "../../../components/Store/PaymentModal";
+import FindCustomerDialog, {
+  type CustomerOption,
+} from "../../../components/Store/FindCustomerDialog";
+import AddCustomerDialog from "../../../components/Store/AddCustomerDialog";
 import { useSnackbar } from "../../../libs/context/SnackbarContext";
-
-// Mock data (thay bằng API sau)
 
 export default function TableDetailPage() {
   const [productTab, setProductTab] = useState(0);
@@ -46,6 +48,8 @@ export default function TableDetailPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [open, setOpen] = useState(false);
+  const [openFindCustomer, setOpenFindCustomer] = useState(false);
+  const [openAddCustomer, setOpenAddCustomer] = useState(false);
   const { products } = useProduct();
   const { showSuccess, showError } = useSnackbar();
   const { id } = useParams<{ id: string }>();
@@ -61,6 +65,8 @@ export default function TableDetailPage() {
     removeServiceFromTable,
     updateServiceQuantity,
     isUpdatingServiceQuantity,
+    assignCustomer,
+    isAssigningCustomer,
   } = useTableSession(id ?? "");
 
   const service = sessionData?.session?.services || [];
@@ -119,6 +125,26 @@ export default function TableDetailPage() {
     setDeleteId(null);
   };
 
+  const handleAssignCustomer = (customer: CustomerOption) => {
+    if (!sessionData?.session?.id || !id) return;
+
+    assignCustomer(
+      {
+        tableId: id,
+        sessionId: sessionData.session.id,
+        customerId: customer.id,
+      },
+      {
+        onSuccess: () => {
+          showSuccess(`Đã gán khách: ${customer.fullName}`);
+        },
+        onError: () => {
+          showError("Gán khách thất bại!");
+        },
+      },
+    );
+  };
+
   const handleUpdateQuantity = (
     serviceId: string,
     currentQty: number,
@@ -159,6 +185,40 @@ export default function TableDetailPage() {
         <Typography variant="h6" sx={{ mb: 1 }}>
           {table?.tableName}
         </Typography>
+        {sessionData?.session?.booking && (
+          <Chip
+            size="small"
+            color="secondary"
+            sx={{ mb: 1, mr: 1 }}
+            label={`Check-in đặt bàn ${sessionData.session.booking.bookingCode} — ${sessionData.session.booking.customerName} (${sessionData.session.booking.startTime}–${sessionData.session.booking.endTime})`}
+          />
+        )}
+        {sessionData?.session?.customer && (
+          <Chip
+            size="small"
+            color="primary"
+            sx={{ mb: 1 }}
+            label={`KH: ${sessionData.session.customer.fullName} · ${sessionData.session.customer.phone}`}
+            onDelete={
+              isAssigningCustomer
+                ? undefined
+                : () => {
+                    if (!sessionData?.session?.id || !id) return;
+                    assignCustomer(
+                      {
+                        tableId: id,
+                        sessionId: sessionData.session.id,
+                        customerId: null,
+                      },
+                      {
+                        onSuccess: () => showSuccess("Đã bỏ gán khách"),
+                        onError: () => showError("Không thể bỏ gán khách"),
+                      },
+                    );
+                  }
+            }
+          />
+        )}
         <Box sx={{ display: "flex", gap: 2 }}>
           {/* Left: Order detail */}
           <Box sx={{ flex: 2, minWidth: 580 }}>
@@ -172,10 +232,17 @@ export default function TableDetailPage() {
                   mb: 1.5,
                 }}
               >
-                <Button startIcon={<SearchIcon />}>Tìm khách</Button>
+                <Button
+                  startIcon={<SearchIcon />}
+                  onClick={() => setOpenFindCustomer(true)}
+                  disabled={!sessionData?.session}
+                >
+                  Tìm khách
+                </Button>
                 <Button
                   startIcon={<PersonAddIcon />}
-                  onClick={() => window.open("/create-user", "_blank")}
+                  onClick={() => setOpenAddCustomer(true)}
+                  disabled={!sessionData?.session}
                 >
                   Thêm khách mới
                 </Button>
@@ -452,6 +519,10 @@ export default function TableDetailPage() {
                   total={sessionData?.estimatedTotal || 0}
                   sessionId={sessionData?.session?.id || ""}
                   tableId={sessionData?.table.id || ""}
+                  customerId={
+                    sessionData?.session?.customer?.id ??
+                    sessionData?.session?.booking?.customerId
+                  }
                 />
               </Box>
             </Paper>
@@ -633,6 +704,18 @@ export default function TableDetailPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <FindCustomerDialog
+        open={openFindCustomer}
+        onClose={() => setOpenFindCustomer(false)}
+        onSelect={handleAssignCustomer}
+      />
+      <AddCustomerDialog
+        open={openAddCustomer}
+        onClose={() => setOpenAddCustomer(false)}
+        onCreated={handleAssignCustomer}
+        onError={(msg) => showError(msg)}
+      />
     </>
   );
 }

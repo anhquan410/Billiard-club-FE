@@ -76,3 +76,15 @@ export async function createCustomerBooking(
   const response = await agent.post<TableBooking>("/bookings/my", payload);
   return response.data;
 }
+
+export async function getConfirmedBookingForTable(tableId: string) {
+  const response = await agent.get<TableBooking | null>(
+    `/bookings/table/${tableId}/active-confirmed`,
+  );
+  return response.data;
+}
+
+export async function markNoShowBooking(id: string) {
+  const response = await agent.patch<TableBooking>(`/bookings/${id}/no-show`);
+  return response.data;
+}

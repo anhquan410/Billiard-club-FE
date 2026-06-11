@@ -5,7 +5,9 @@ import {
   createBooking,
   createCustomerBooking,
   getBookingDashboard,
+  getConfirmedBookingForTable,
   getMyBookings,
+  markNoShowBooking,
   type BookingQueryParams,
   type CreateBookingPayload,
   type CustomerCreateBookingPayload,
@@ -43,6 +45,7 @@ export const useConfirmBooking = () => {
     mutationFn: (id: string) => confirmBooking(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: BOOKING_QUERY_KEY.all });
+      queryClient.invalidateQueries({ queryKey: ["tables"] });
     },
   });
 };
@@ -54,6 +57,7 @@ export const useCancelBooking = () => {
     mutationFn: (id: string) => cancelBooking(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: BOOKING_QUERY_KEY.all });
+      queryClient.invalidateQueries({ queryKey: ["tables"] });
     },
   });
 };
@@ -62,6 +66,18 @@ export const useMyBookings = () => {
   return useQuery({
     queryKey: BOOKING_QUERY_KEY.my(),
     queryFn: getMyBookings,
+  });
+};
+
+export const useMarkNoShowBooking = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => markNoShowBooking(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: BOOKING_QUERY_KEY.all });
+      queryClient.invalidateQueries({ queryKey: ["tables"] });
+    },
   });
 };
 

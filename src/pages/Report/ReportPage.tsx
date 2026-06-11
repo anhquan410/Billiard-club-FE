@@ -350,10 +350,14 @@ export default function ReportPage() {
               ),
             },
             {
-              key: "util",
-              label: "Sử dụng",
-              align: "center",
-              render: (r) => `${r.utilizationPercent}%`,
+              key: "totalAfterDiscount",
+              label: "Tổng DT sau giảm giá",
+              align: "right",
+              render: (r) => (
+                <Typography fontWeight={600} color="success.main">
+                  {formatCurrency(r.totalRevenueAfterDiscount)}
+                </Typography>
+              ),
             },
           ]}
         />

@@ -10,9 +10,11 @@ import {
   addServiceToTable as addServiceToTableApi,
   removeServiceFromTable as removeServiceFromTableApi,
   updateServiceQuantity as updateServiceQuantityApi,
+  assignCustomerToSession as assignCustomerToSessionApi,
 } from "../api/table";
 import { PRODUCTS_QUERY_KEY } from "./useProduct";
 import { RECEIPT_QUERY_KEY } from "./useReceipt";
+import { BOOKING_QUERY_KEY } from "./useBooking";
 
 export const TABLES_QUERY_KEY = {
   all: ["tables"],
@@ -31,8 +33,9 @@ export const useTable = (id?: string) => {
   const { data: tables, isLoading: isLoadingTables } = useQuery({
     queryKey: TABLES_QUERY_KEY.all,
     queryFn: getAllTables,
-    refetchOnMount: "always", // Luôn refetch khi mount lại
-    refetchOnWindowFocus: true, // Refetch khi focus lại window
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+    refetchInterval: 30_000, // Cập nhật tổng tiền tạm tính theo thời gian chơi
   });
 
   // Get table by ID
@@ -51,14 +54,19 @@ export const useTable = (id?: string) => {
     mutationFn: ({
       tableId,
       note,
+      bookingId,
     }: {
       tableId: string;
       note?: string;
-    }) => startTableSessionApi(tableId, note),
-    onSuccess: (_data, _variables) => {
-      // Invalidate queries or update cache as needed
+      bookingId?: string;
+    }) => startTableSessionApi(tableId, { note, bookingId }),
+    onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: TABLES_QUERY_KEY.all,
+        refetchType: "all",
+      });
+      queryClient.invalidateQueries({
+        queryKey: BOOKING_QUERY_KEY.all,
         refetchType: "all",
       });
     },
@@ -202,6 +210,31 @@ export const useTableSession = (tableId: string) => {
   });
 
   const {
+    mutate: assignCustomer,
+    isPending: isAssigningCustomer,
+  } = useMutation({
+    mutationFn: ({
+      tableId,
+      sessionId,
+      customerId,
+    }: {
+      tableId: string;
+      sessionId: string;
+      customerId: string | null;
+    }) => assignCustomerToSessionApi(tableId, sessionId, customerId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [...TABLES_QUERY_KEY.table(tableId), "session"],
+        refetchType: "all",
+      });
+      queryClient.invalidateQueries({
+        queryKey: TABLES_QUERY_KEY.all,
+        refetchType: "all",
+      });
+    },
+  });
+
+  const {
     mutate: endTableSession,
     mutateAsync: endTableSessionAsync,
     isPending: isEndingTableSession,
@@ -216,12 +249,17 @@ export const useTableSession = (tableId: string) => {
         discount?: number;
         note?: string;
         customerId?: string;
+        bonusPointsToUse?: number;
+        useTierDiscount?: boolean;
       };
     }) => endTableSessionApi(tableId, paymentData),
     onSuccess: () => {
-      // Invalidate tất cả queries liên quan
       queryClient.invalidateQueries({
         queryKey: TABLES_QUERY_KEY.all,
+        refetchType: "all",
+      });
+      queryClient.invalidateQueries({
+        queryKey: BOOKING_QUERY_KEY.all,
         refetchType: "all",
       });
       queryClient.invalidateQueries({
@@ -244,6 +282,8 @@ export const useTableSession = (tableId: string) => {
     isRemovingServiceFromTable,
     updateServiceQuantity,
     isUpdatingServiceQuantity,
+    assignCustomer,
+    isAssigningCustomer,
     endTableSession,
     endTableSessionAsync,
     isEndingTableSession,

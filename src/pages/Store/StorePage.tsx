@@ -16,6 +16,7 @@ import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { useAccount } from "../../libs/hooks/useAccount";
 import { getTableSession } from "../../libs/api/table";
+import { getConfirmedBookingForTable } from "../../libs/api/booking";
 import { useSnackbar } from "../../libs/context/SnackbarContext";
 import { getApiErrorMessage } from "../../libs/utils/apiError";
 import PageLoader from "../../components/common/PageLoader";
@@ -45,10 +46,13 @@ export default function StorePage() {
   );
   const vipTables = tables.filter((t: TableData) => t.tableName === "Bàn 13");
   const totalTables = tables.length;
-  // const totalAmount = tables.reduce(
-  //   (sum: number, table: TableData) => sum + table.totalAmount,
-  //   0,
-  // );
+  const totalEstimatedAmount = tables.reduce(
+    (sum: number, table: TableData) =>
+      table.status === "OCCUPIED"
+        ? sum + (table.estimatedTotal ?? 0)
+        : sum,
+    0,
+  );
 
   // Handlers
   const handleOpenOrder = async (table: TableData) => {
@@ -72,9 +76,37 @@ export default function StorePage() {
       return;
     }
 
-    // Nếu bàn AVAILABLE, gọi startTableSession trước
+    // Bàn RESERVED: check-in từ đặt bàn đã xác nhận
+    if (table.status === "RESERVED") {
+      try {
+        const booking = await getConfirmedBookingForTable(table.id);
+        if (!booking) {
+          showError("Không tìm thấy đặt bàn đã xác nhận cho bàn này.");
+          return;
+        }
+
+        const sessionData = await startTableSessionAsync({
+          tableId: table.id,
+          bookingId: booking.id,
+          note: `Check-in ${booking.bookingCode}`,
+        });
+
+        showSuccess(
+          `Check-in thành công — ${booking.customerName} (${booking.startTime}–${booking.endTime})`,
+        );
+        navigate(`/store/table/${table.id}`, {
+          state: { sessionData },
+        });
+      } catch (error) {
+        showError(
+          getApiErrorMessage(error, "Không thể check-in đặt bàn. Vui lòng thử lại!"),
+        );
+      }
+      return;
+    }
+
+    // Bàn AVAILABLE: walk-in, mở bàn trực tiếp
     try {
-      // Gọi API start session và nhận data
       const sessionData = await startTableSessionAsync({
         tableId: table.id,
         note: "",
@@ -146,8 +178,7 @@ export default function StorePage() {
                   textTransform: "none",
                 }}
               >
-                {/* Tổng tiền: {totalAmount.toLocaleString("vi-VN")} */}
-                Tổng tiền: 0
+                Tổng tiền: {totalEstimatedAmount.toLocaleString("vi-VN")} đ
               </Button>
             </Box>
             <Box sx={{ display: "flex", gap: 1 }}>

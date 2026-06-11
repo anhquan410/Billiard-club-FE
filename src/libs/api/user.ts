@@ -31,6 +31,34 @@ export async function deleteUserById(id: string) {
     throw error;
   }
 }
+export type CustomerSummary = {
+  id: string;
+  fullName: string;
+  phone: string;
+  email: string;
+  bonusPoints: number;
+  membershipTier: string;
+};
+
+export type StaffSummary = {
+  id: string;
+  fullName: string;
+  role: "ADMIN" | "CASHIER" | "STAFF";
+};
+
+export async function getStaffForAssignment() {
+  const response = await agent.get<StaffSummary[]>("/users/staff/list");
+  return response.data;
+}
+
+export async function searchCustomers(q?: string) {
+  const params = q ? `?q=${encodeURIComponent(q)}` : "";
+  const response = await agent.get<CustomerSummary[]>(
+    `/users/customers/search${params}`,
+  );
+  return response.data;
+}
+
 export async function createUser(data: {
   fullName: string;
   email: string;

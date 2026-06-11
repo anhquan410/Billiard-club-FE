@@ -29,6 +29,7 @@ import EventSeatIcon from "@mui/icons-material/EventSeat";
 import AddIcon from "@mui/icons-material/Add";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
+import PersonOffIcon from "@mui/icons-material/PersonOff";
 import PhoneIcon from "@mui/icons-material/Phone";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { formatCurrency } from "../../libs/utils/format";
@@ -40,6 +41,7 @@ import {
   useCancelBooking,
   useConfirmBooking,
   useCreateBooking,
+  useMarkNoShowBooking,
 } from "../../libs/hooks/useBooking";
 import { useSnackbar } from "../../libs/context/SnackbarContext";
 import { getApiErrorMessage } from "../../libs/utils/apiError";
@@ -89,6 +91,7 @@ export default function BookingPage() {
   const { mutate: createBooking, isPending: isCreating } = useCreateBooking();
   const { mutate: confirmBooking } = useConfirmBooking();
   const { mutate: cancelBooking } = useCancelBooking();
+  const { mutate: markNoShow } = useMarkNoShowBooking();
 
   const filteredBookings =
     statusFilter === "ALL"
@@ -146,6 +149,15 @@ export default function BookingPage() {
       onSuccess: () => showSnackbar("Đã hủy đặt bàn", "success"),
       onError: (err) =>
         showSnackbar(getApiErrorMessage(err, "Không thể hủy đặt bàn"), "error"),
+    });
+  };
+
+  const handleNoShow = (id: string) => {
+    markNoShow(id, {
+      onSuccess: () =>
+        showSnackbar("Đã đánh dấu khách không đến, bàn đã được trả trống", "success"),
+      onError: (err) =>
+        showSnackbar(getApiErrorMessage(err, "Không thể cập nhật"), "error"),
     });
   };
 
@@ -377,6 +389,32 @@ export default function BookingPage() {
                                 size="small"
                                 color="error"
                                 title="Hủy"
+                                onClick={() => handleCancel(booking.id)}
+                              >
+                                <CancelIcon fontSize="small" />
+                              </IconButton>
+                            </Box>
+                          )}
+                          {booking.status === "CONFIRMED" && (
+                            <Box
+                              sx={{
+                                display: "flex",
+                                justifyContent: "center",
+                                gap: 0.5,
+                              }}
+                            >
+                              <IconButton
+                                size="small"
+                                color="warning"
+                                title="Khách không đến"
+                                onClick={() => handleNoShow(booking.id)}
+                              >
+                                <PersonOffIcon fontSize="small" />
+                              </IconButton>
+                              <IconButton
+                                size="small"
+                                color="error"
+                                title="Hủy đặt bàn"
                                 onClick={() => handleCancel(booking.id)}
                               >
                                 <CancelIcon fontSize="small" />

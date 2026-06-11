@@ -23,6 +23,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import SearchIcon from "@mui/icons-material/Search";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { useAccount } from "../../libs/hooks/useAccount";
+import { getTierLabel, TIER_COLORS } from "../../libs/utils/bonusLabels";
 import { useUser } from "../../libs/hooks/useUser";
 import type { Hr } from "../../libs/types";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -66,7 +67,6 @@ export default function CustomerPage() {
   // State for delete confirmation dialog
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
-
   const handleEdit = (id: string) => {
     navigate(`/profile/${id}`);
   };
@@ -199,7 +199,8 @@ export default function CustomerPage() {
                   STT
                 </TableCell>
                 <TableCell>Tên khách hàng</TableCell>
-                <TableCell>Tổng hóa đơn</TableCell>
+                <TableCell align="right">Điểm</TableCell>
+                <TableCell align="center">Hạng</TableCell>
                 <TableCell>Số điện thoại</TableCell>
                 <TableCell>Quyền</TableCell>
                 <TableCell align="center">Trạng thái</TableCell>
@@ -219,7 +220,21 @@ export default function CustomerPage() {
                       {customer.fullName}
                     </Typography>
                   </TableCell>
-                  <TableCell></TableCell>
+                  <TableCell align="right">
+                    {(customer.bonusPoints ?? 0).toLocaleString("vi-VN")}
+                  </TableCell>
+                  <TableCell align="center">
+                    <Chip
+                      size="small"
+                      label={getTierLabel(customer.membershipTier)}
+                      sx={{
+                        bgcolor:
+                          TIER_COLORS[customer.membershipTier ?? "BRONZE"] ??
+                          "#9e9e9e",
+                        color: "#fff",
+                      }}
+                    />
+                  </TableCell>
                   <TableCell>{customer.phone}</TableCell>
                   <TableCell>
                     <Chip

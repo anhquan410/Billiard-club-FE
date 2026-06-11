@@ -2,23 +2,49 @@ import { Box, Paper, Typography } from "@mui/material";
 import type { RevenueByDay } from "../../../libs/types/report.type";
 import { formatCurrency } from "../../../libs/utils/format";
 
+const CHART_HEIGHT = 180;
+
 type RevenueChartProps = {
   data: RevenueByDay[];
 };
 
+function formatAxisLabel(value: number) {
+  if (value >= 1_000_000) {
+    return `${(value / 1_000_000).toFixed(1)}tr`;
+  }
+  if (value >= 1_000) {
+    return `${(value / 1_000).toFixed(0)}k`;
+  }
+  return value.toString();
+}
+
 export default function RevenueChart({ data }: RevenueChartProps) {
-  const maxTotal = Math.max(...data.map((d) => d.total));
+  const maxTotal = Math.max(...data.map((d) => d.total), 0);
 
   return (
     <Paper sx={{ p: 2.5, height: "100%" }}>
       <Typography variant="h6" fontWeight={600} gutterBottom>
         Doanh thu theo ngày
       </Typography>
-      <Box sx={{ display: "flex", alignItems: "flex-end", gap: 1, height: 220, mt: 2 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "flex-end",
+          gap: 1,
+          height: CHART_HEIGHT + 48,
+          mt: 2,
+        }}
+      >
         {data.map((item) => {
-          const heightPercent = maxTotal > 0 ? (item.total / maxTotal) * 100 : 0;
-          const tablePercent =
-            item.total > 0 ? (item.tableRevenue / item.total) * 100 : 0;
+          const barHeight =
+            maxTotal > 0
+              ? Math.max(4, Math.round((item.total / maxTotal) * CHART_HEIGHT))
+              : 0;
+          const tableHeight =
+            item.total > 0
+              ? Math.round((item.tableRevenue / item.total) * barHeight)
+              : 0;
+          const productHeight = Math.max(0, barHeight - tableHeight);
 
           return (
             <Box
@@ -28,36 +54,37 @@ export default function RevenueChart({ data }: RevenueChartProps) {
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
+                justifyContent: "flex-end",
+                height: "100%",
                 gap: 0.5,
               }}
             >
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: 10 }}>
-                {(item.total / 1_000_000).toFixed(1)}tr
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ fontSize: 10, minHeight: 14 }}
+              >
+                {item.total > 0 ? formatAxisLabel(item.total) : "0"}
               </Typography>
               <Box
                 sx={{
                   width: "100%",
                   maxWidth: 48,
-                  height: `${heightPercent}%`,
-                  minHeight: 4,
+                  height: barHeight,
                   borderRadius: "4px 4px 0 0",
                   overflow: "hidden",
                   display: "flex",
                   flexDirection: "column",
+                  justifyContent: "flex-end",
+                  bgcolor: item.total > 0 ? "transparent" : "#f5f5f5",
                 }}
               >
-                <Box
-                  sx={{
-                    flex: tablePercent,
-                    bgcolor: "#3f51b5",
-                  }}
-                />
-                <Box
-                  sx={{
-                    flex: 100 - tablePercent,
-                    bgcolor: "#f06292",
-                  }}
-                />
+                {tableHeight > 0 && (
+                  <Box sx={{ height: tableHeight, bgcolor: "#3f51b5" }} />
+                )}
+                {productHeight > 0 && (
+                  <Box sx={{ height: productHeight, bgcolor: "#f06292" }} />
+                )}
               </Box>
               <Typography variant="caption">{item.date}</Typography>
             </Box>
@@ -66,11 +93,15 @@ export default function RevenueChart({ data }: RevenueChartProps) {
       </Box>
       <Box sx={{ display: "flex", gap: 3, mt: 2 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Box sx={{ width: 12, height: 12, bgcolor: "#3f51b5", borderRadius: 0.5 }} />
+          <Box
+            sx={{ width: 12, height: 12, bgcolor: "#3f51b5", borderRadius: 0.5 }}
+          />
           <Typography variant="caption">Tiền bàn</Typography>
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Box sx={{ width: 12, height: 12, bgcolor: "#f06292", borderRadius: 0.5 }} />
+          <Box
+            sx={{ width: 12, height: 12, bgcolor: "#f06292", borderRadius: 0.5 }}
+          />
           <Typography variant="caption">Sản phẩm</Typography>
         </Box>
         <Typography variant="caption" color="text.secondary" sx={{ ml: "auto" }}>

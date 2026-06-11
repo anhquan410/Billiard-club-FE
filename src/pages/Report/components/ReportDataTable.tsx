@@ -34,7 +34,12 @@ export default function ReportDataTable<T>({
         {title}
       </Typography>
       <TableContainer>
-        <Table size="small">
+        <Table
+          sx={{
+            "& .MuiTableCell-root": { fontSize: 16 },
+            "& .MuiTypography-root": { fontSize: 16 },
+          }}
+        >
           <TableHead sx={{ bgcolor: "#f5f5f5" }}>
             <TableRow>
               {columns.map((col) => (

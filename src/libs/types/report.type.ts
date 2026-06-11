@@ -53,7 +53,7 @@ export type TableUsageReport = {
   tableFeeRevenue: number;
   productRevenue: number;
   totalRevenue: number;
-  utilizationPercent: number;
+  totalRevenueAfterDiscount: number;
 };
 
 export type InventoryMovementSummary = {

@@ -22,11 +22,15 @@ export async function getTableById(id: string) {
   }
 }
 
-// Start session for a table
-export async function startTableSession(tableId: string, note?: string) {
+// Start session for a table (walk-in or check-in from booking)
+export async function startTableSession(
+  tableId: string,
+  options?: { note?: string; bookingId?: string },
+) {
   try {
     const response = await agent.post(`/tables/${tableId}/start-session`, {
-      note,
+      note: options?.note,
+      bookingId: options?.bookingId,
     });
     return response.data;
   } catch (error) {
@@ -43,6 +47,8 @@ export async function endTableSession(
     discount?: number;
     note?: string;
     customerId?: string;
+    bonusPointsToUse?: number;
+    useTierDiscount?: boolean;
   },
 ) {
   try {
@@ -97,6 +103,23 @@ export async function removeServiceFromTable(
       {
         data: { serviceId },
       },
+    );
+    return response.data;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+}
+
+export async function assignCustomerToSession(
+  tableId: string,
+  sessionId: string,
+  customerId: string | null,
+) {
+  try {
+    const response = await agent.patch(
+      `/tables/${tableId}/active-session/assign-customer`,
+      { sessionId, customerId },
     );
     return response.data;
   } catch (error) {

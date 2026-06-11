@@ -22,6 +22,8 @@ import PeopleIcon from "@mui/icons-material/People";
 import BadgeIcon from "@mui/icons-material/Badge";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import HistoryIcon from "@mui/icons-material/History";
+import StarsIcon from "@mui/icons-material/Stars";
+import SettingsIcon from "@mui/icons-material/Settings";
 import { useAccount } from "../../libs/hooks/useAccount";
 import {
   getDefaultPathForRole,
@@ -37,12 +39,14 @@ const MENU_ICONS: Record<string, React.ReactNode> = {
   Kho: <InventoryIcon sx={{ color: "#ff9800" }} />,
   "Đặt bàn": <EventSeatIcon sx={{ color: "#9c27b0" }} />,
   "Lịch sử": <HistoryIcon sx={{ color: "#ff5722" }} />,
+  "Điểm thưởng": <StarsIcon sx={{ color: "#e91e63" }} />,
   "Kế toán": <CalculateIcon sx={{ color: "#3f51b5" }} />,
   "Thu ngân": <StorefrontIcon sx={{ color: "#4caf50" }} />,
   "Công việc": <AssignmentIcon sx={{ color: "#f44336" }} />,
   "Khách hàng": <PeopleIcon sx={{ color: "#ff5722" }} />,
   "Nhân sự": <BadgeIcon sx={{ color: "#795548" }} />,
   "Báo cáo": <BarChartIcon sx={{ color: "#607d8b" }} />,
+  "Cài đặt": <SettingsIcon sx={{ color: "#607d8b" }} />,
 };
 
 interface SidebarProps {

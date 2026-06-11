@@ -32,4 +32,6 @@ export type Hr = {
   status: UserStatus;
   updatedAt: string;
   username: string;
+  bonusPoints?: number;
+  membershipTier?: string;
 };

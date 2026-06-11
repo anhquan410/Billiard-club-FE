@@ -21,6 +21,12 @@ export default function TableCard({ table, onOpenOrder }: TableCardProps) {
     OCCUPIED: "#eb1a1a",
     RESERVED: "#616161",
   };
+
+  const customerLabel =
+    table.status === "AVAILABLE"
+      ? null
+      : table.customerName || "Khách vãng lai";
+
   return (
     <Card
       sx={{
@@ -42,11 +48,16 @@ export default function TableCard({ table, onOpenOrder }: TableCardProps) {
               : "Đã đặt trước"}
         </Typography>
         <Box sx={{ mt: 2, fontSize: "13px" }}>
+          {customerLabel && (
+            <Typography variant="body2" sx={{ mb: 0.5 }}>
+              KH: {customerLabel}
+            </Typography>
+          )}
           <Typography variant="body2" sx={{ mb: 0.5 }}>
-            KH: Khách vãng lai
-          </Typography>
-          <Typography variant="body2" sx={{ mb: 0.5 }}>
-            Tổng tiền:
+            Tổng tiền:{" "}
+            {table.estimatedTotal != null
+              ? table.estimatedTotal.toLocaleString("vi-VN")
+              : "—"}
           </Typography>
           <Box
             sx={{
@@ -88,7 +99,13 @@ export default function TableCard({ table, onOpenOrder }: TableCardProps) {
             },
           }}
         >
-          {table.status === "OCCUPIED" ? <EditIcon /> : <AddIcon />}
+          {table.status === "OCCUPIED" ? (
+            <EditIcon />
+          ) : table.status === "RESERVED" ? (
+            <AddIcon titleAccess="Check-in đặt bàn" />
+          ) : (
+            <AddIcon />
+          )}
         </IconButton>
       </CardContent>
     </Card>

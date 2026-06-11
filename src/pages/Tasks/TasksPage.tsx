@@ -37,10 +37,10 @@ import type { Task, TaskStatus } from "../../libs/types/task.type";
 import type { TaskQueryParams } from "../../libs/api/task";
 import {
   useCreateTask,
+  useStaffForAssignment,
   useTaskDashboard,
   useUpdateTaskStatus,
 } from "../../libs/hooks/useTask";
-import { useUser } from "../../libs/hooks/useUser";
 import { useSnackbar } from "../../libs/context/SnackbarContext";
 import { getApiErrorMessage } from "../../libs/utils/apiError";
 import PageLoader from "../../components/common/PageLoader";
@@ -71,7 +71,7 @@ const priorityChipColor = (priority: Task["priority"]) => {
 
 export default function TasksPage() {
   const { showSnackbar } = useSnackbar();
-  const { users } = useUser();
+  const { data: staffUsers = [] } = useStaffForAssignment();
   const [activeTab, setActiveTab] = useState(0);
   const [appliedParams, setAppliedParams] = useState<TaskQueryParams>({});
   const [openCreate, setOpenCreate] = useState(false);
@@ -399,7 +399,7 @@ export default function TasksPage() {
               }
               MenuProps={{ disableScrollLock: true }}
             >
-              {(users ?? []).map((user) => (
+              {staffUsers.map((user) => (
                 <MenuItem key={user.id} value={user.id}>
                   {user.fullName}
                 </MenuItem>

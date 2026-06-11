@@ -19,6 +19,8 @@ import HrPage from "../../pages/HumanResources/HrPage";
 import CustomerPage from "../../pages/Customer/CustomerPage";
 import ReportPage from "../../pages/Report/ReportPage";
 import PlayHistoryPage from "../../pages/Customer/PlayHistoryPage";
+import CustomerBonusPage from "../../pages/Customer/CustomerBonusPage";
+import BonusSettingsPage from "../../pages/Settings/BonusSettingsPage";
 import AccountingPage from "../../pages/Accounting/AccountingPage";
 import TasksPage from "../../pages/Tasks/TasksPage";
 import ProductDetailPage from "../../pages/WareHouse/Products/ProductDetailPage";
@@ -67,6 +69,8 @@ export const router = createBrowserRouter([
                   },
                   { path: "bookings", element: <BookingRoute /> },
                   { path: "history", element: <PlayHistoryPage /> },
+                  { path: "bonus", element: <CustomerBonusPage /> },
+                  { path: "settings/bonus", element: <BonusSettingsPage /> },
                   { path: "accounting", element: <AccountingPage /> },
                   {
                     path: "store",

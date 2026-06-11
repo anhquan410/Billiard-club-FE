@@ -10,7 +10,6 @@ import {
   DialogTitle,
   FormControl,
   Grid,
-  IconButton,
   InputLabel,
   MenuItem,
   Paper,
@@ -66,6 +65,10 @@ export default function CustomerBookingPage() {
     useCreateCustomerBooking();
   const { mutate: cancelBooking } = useCancelBooking();
   const [openCreate, setOpenCreate] = useState(false);
+  const [cancelTarget, setCancelTarget] = useState<{
+    id: string;
+    bookingCode: string;
+  } | null>(null);
   const [form, setForm] = useState({
     tableId: "",
     bookingDate: today,
@@ -102,9 +105,14 @@ export default function CustomerBookingPage() {
     );
   };
 
-  const handleCancel = (id: string) => {
-    cancelBooking(id, {
-      onSuccess: () => showSnackbar("Đã hủy đặt bàn", "success"),
+  const handleCancelConfirm = () => {
+    if (!cancelTarget) return;
+
+    cancelBooking(cancelTarget.id, {
+      onSuccess: () => {
+        showSnackbar("Đã hủy đặt bàn", "success");
+        setCancelTarget(null);
+      },
       onError: (err) =>
         showSnackbar(getApiErrorMessage(err, "Không thể hủy đặt bàn"), "error"),
     });
@@ -222,15 +230,26 @@ export default function CustomerBookingPage() {
                       />
                     </TableCell>
                     <TableCell align="center">
-                      {booking.status === "PENDING" && (
-                        <IconButton
+                      {booking.canCancel ? (
+                        <Button
                           size="small"
+                          variant="outlined"
                           color="error"
-                          onClick={() => handleCancel(booking.id)}
-                          title="Hủy đặt bàn"
+                          startIcon={<CancelIcon />}
+                          onClick={() =>
+                            setCancelTarget({
+                              id: booking.id,
+                              bookingCode: booking.bookingCode,
+                            })
+                          }
+                          sx={{ textTransform: "none", whiteSpace: "nowrap" }}
                         >
-                          <CancelIcon fontSize="small" />
-                        </IconButton>
+                          Hủy đặt bàn
+                        </Button>
+                      ) : (
+                        <Typography variant="caption" color="text.secondary">
+                          —
+                        </Typography>
                       )}
                     </TableCell>
                   </TableRow>
@@ -240,6 +259,30 @@ export default function CustomerBookingPage() {
           </Table>
         </TableContainer>
       </Paper>
+
+      <Dialog
+        open={!!cancelTarget}
+        onClose={() => setCancelTarget(null)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Xác nhận hủy đặt bàn</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Bạn có chắc muốn hủy đặt bàn?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCancelTarget(null)}>Không</Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleCancelConfirm}
+          >
+            Hủy đặt bàn
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog
         open={openCreate}

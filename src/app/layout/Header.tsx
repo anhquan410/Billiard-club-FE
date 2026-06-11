@@ -3,7 +3,6 @@ import {
   AppBar,
   Toolbar,
   IconButton,
-  Badge,
   Avatar,
   Box,
   Select,
@@ -15,8 +14,8 @@ import {
 } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 import LogoutIcon from "@mui/icons-material/Logout";
-import NotificationsIcon from "@mui/icons-material/Notifications";
 import LanguageIcon from "@mui/icons-material/Language";
+import NotificationBell from "../../components/common/NotificationBell";
 import AppsIcon from "@mui/icons-material/Apps";
 import VpnKeyIcon from "@mui/icons-material/VpnKey";
 import { useNavigate } from "react-router-dom";
@@ -114,11 +113,7 @@ export default function Header({ sidebarWidth }: HeaderProps) {
 
         {/* Right side - Notifications & Avatar */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <IconButton>
-            <Badge badgeContent="99+" color="error" max={99}>
-              <NotificationsIcon />
-            </Badge>
-          </IconButton>
+          <NotificationBell />
 
           <Avatar
             sx={{

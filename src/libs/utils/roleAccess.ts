@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 export type AppRole = "ADMIN" | "CASHIER" | "STAFF" | "CUSTOMER";
 
 const ADMIN_ONLY_PREFIXES = [
@@ -6,12 +7,22 @@ const ADMIN_ONLY_PREFIXES = [
   "/warehouse",
   "/customers",
   "/create-user",
+  "/settings",
 ];
 
 const CUSTOMER_ALLOWED_PREFIXES = [
   "/marketing",
   "/bookings",
   "/history",
+  "/bonus",
+  "/profile",
+];
+
+const STAFF_ALLOWED_PREFIXES = [
+  "/marketing",
+  "/bookings",
+  "/store",
+  "/tasks",
   "/profile",
 ];
 
@@ -20,6 +31,12 @@ export function canAccessPath(role: AppRole, pathname: string): boolean {
 
   if (role === "CUSTOMER") {
     return CUSTOMER_ALLOWED_PREFIXES.some(
+      (prefix) => path === prefix || path.startsWith(`${prefix}/`),
+    );
+  }
+
+  if (role === "STAFF") {
+    return STAFF_ALLOWED_PREFIXES.some(
       (prefix) => path === prefix || path.startsWith(`${prefix}/`),
     );
   }
@@ -52,7 +69,7 @@ export const SIDEBAR_MENU: SidebarMenuItem[] = [
   {
     text: "Sales",
     path: "/sales",
-    roles: ["ADMIN", "CASHIER", "STAFF"],
+    roles: ["ADMIN", "CASHIER"],
   },
   {
     text: "Kho",
@@ -70,9 +87,14 @@ export const SIDEBAR_MENU: SidebarMenuItem[] = [
     roles: ["CUSTOMER"],
   },
   {
+    text: "Điểm thưởng",
+    path: "/bonus",
+    roles: ["CUSTOMER"],
+  },
+  {
     text: "Kế toán",
     path: "/accounting",
-    roles: ["ADMIN", "CASHIER", "STAFF"],
+    roles: ["ADMIN", "CASHIER"],
   },
   {
     text: "Thu ngân",
@@ -97,6 +119,11 @@ export const SIDEBAR_MENU: SidebarMenuItem[] = [
   {
     text: "Báo cáo",
     path: "/reports",
+    roles: ["ADMIN"],
+  },
+  {
+    text: "Cài đặt",
+    path: "/settings/bonus",
     roles: ["ADMIN"],
   },
 ];
