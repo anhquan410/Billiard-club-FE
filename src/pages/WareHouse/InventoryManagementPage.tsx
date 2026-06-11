@@ -24,11 +24,18 @@ import SearchIcon from "@mui/icons-material/Search";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import type { ProductItem } from "../../libs/types/warehouse.type";
 import { useProductPagination } from "../../libs/hooks/useProduct";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useState } from "react";
+import ProductDetailDialog from "../../components/WareHouse/ProductDetailDialog";
+import { getCategoryLabel } from "../../libs/utils/productLabels";
+import PageLoader from "../../components/common/PageLoader";
 
 export default function InventoryManagementPage() {
+  const navigate = useNavigate();
   const [searchText, setSearchText] = useState("");
+  const [selectedProduct, setSelectedProduct] = useState<ProductItem | null>(
+    null,
+  );
   const [searchParams, setSearchParams] = useSearchParams();
   const page = Number(searchParams.get("page")) || 1;
   const limit = Number(searchParams.get("limit")) || 10;
@@ -48,13 +55,15 @@ export default function InventoryManagementPage() {
   const category = searchParams.get("category") || "ALL";
 
   // Luôn truyền đủ 3 tham số cho useProduct, nếu không có category thì truyền rỗng chuỗi
-  const { paginatedProducts } = useProductPagination(
+  const { paginatedProducts, isLoadingProducts } = useProductPagination(
     page,
     limit,
     category !== "ALL" ? category : "",
   );
 
-  if (!paginatedProducts) return <div>Loading...</div>;
+  if (isLoadingProducts || !paginatedProducts) {
+    return <PageLoader color="#ff9800" />;
+  }
 
   // Xử lý đổi trang
   const handlePageChange = (e: React.ChangeEvent<unknown>, value: number) => {
@@ -81,32 +90,6 @@ export default function InventoryManagementPage() {
         limit: limit.toString(),
         category: newCategory,
       });
-    }
-  };
-
-  // Hàm chuyển category code sang tên hiển thị
-  const getCategoryLabel = (category: string) => {
-    switch (category) {
-      case "FOOD":
-        return "Đồ ăn";
-      case "BEVERAGE":
-        return "Nước ngọt không gas";
-      case "SERVICE":
-        return "Dịch vụ";
-      case "CIGARETTE":
-        return "Thuốc lá";
-      case "OTHER":
-        return "Khác";
-      case "EQUIPMENT":
-        return "Thiết bị";
-      case "SODA":
-        return "Nước ngọt có gas";
-      case "COFFEE":
-        return "Cà phê";
-      case "BEER":
-        return "Bia";
-      default:
-        return category;
     }
   };
 
@@ -239,7 +222,10 @@ export default function InventoryManagementPage() {
                   </TableCell>
 
                   <TableCell align="center">
-                    <IconButton size="small">
+                    <IconButton
+                      size="small"
+                      onClick={() => setSelectedProduct(item)}
+                    >
                       <VisibilityIcon />
                     </IconButton>
                   </TableCell>
@@ -286,6 +272,13 @@ export default function InventoryManagementPage() {
           </Select>
         </FormControl>
       </Box>
+
+      <ProductDetailDialog
+        product={selectedProduct}
+        open={!!selectedProduct}
+        onClose={() => setSelectedProduct(null)}
+        onEdit={(productId) => navigate(`/warehouse/products/${productId}`)}
+      />
     </Box>
   );
 }

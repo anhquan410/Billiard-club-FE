@@ -14,85 +14,53 @@ import MenuIcon from "@mui/icons-material/Menu";
 import CampaignIcon from "@mui/icons-material/Campaign";
 import HeadsetMicIcon from "@mui/icons-material/HeadsetMic";
 import InventoryIcon from "@mui/icons-material/Inventory";
-import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
+import EventSeatIcon from "@mui/icons-material/EventSeat";
 import CalculateIcon from "@mui/icons-material/Calculate";
 import StorefrontIcon from "@mui/icons-material/Storefront";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import PeopleIcon from "@mui/icons-material/People";
 import BadgeIcon from "@mui/icons-material/Badge";
 import BarChartIcon from "@mui/icons-material/BarChart";
+import HistoryIcon from "@mui/icons-material/History";
+import { useAccount } from "../../libs/hooks/useAccount";
+import {
+  getDefaultPathForRole,
+  getMenuItemsForRole,
+  type AppRole,
+} from "../../libs/utils/roleAccess";
 
 const DRAWER_WIDTH = 240;
 
-interface MenuItem {
-  text: string;
-  icon: React.ReactNode;
-  path: string;
-}
-
-const menuItems: MenuItem[] = [
-  {
-    text: "Marketing",
-    icon: <CampaignIcon sx={{ color: "#e91e63" }} />,
-    path: "/marketing",
-  },
-  {
-    text: "Sales",
-    icon: <HeadsetMicIcon sx={{ color: "#2196f3" }} />,
-    path: "/sales",
-  },
-  {
-    text: "Kho",
-    icon: <InventoryIcon sx={{ color: "#ff9800" }} />,
-    path: "/warehouse",
-  },
-  {
-    text: "Mua hàng",
-    icon: <ShoppingCartIcon sx={{ color: "#9c27b0" }} />,
-    path: "/purchasing",
-  },
-  {
-    text: "Kế toán",
-    icon: <CalculateIcon sx={{ color: "#3f51b5" }} />,
-    path: "/accounting",
-  },
-  {
-    text: "Thu ngân",
-    icon: <StorefrontIcon sx={{ color: "#4caf50" }} />,
-    path: "/store",
-  },
-  {
-    text: "Công việc",
-    icon: <AssignmentIcon sx={{ color: "#f44336" }} />,
-    path: "/tasks",
-  },
-  {
-    text: "Khách hàng",
-    icon: <PeopleIcon sx={{ color: "#ff5722" }} />,
-    path: "/customers",
-  },
-  {
-    text: "Nhân sự",
-    icon: <BadgeIcon sx={{ color: "#795548" }} />,
-    path: "/hr",
-  },
-  {
-    text: "Báo cáo",
-    icon: <BarChartIcon sx={{ color: "#607d8b" }} />,
-    path: "/reports",
-  },
-];
+const MENU_ICONS: Record<string, React.ReactNode> = {
+  Marketing: <CampaignIcon sx={{ color: "#e91e63" }} />,
+  Sales: <HeadsetMicIcon sx={{ color: "#2196f3" }} />,
+  Kho: <InventoryIcon sx={{ color: "#ff9800" }} />,
+  "Đặt bàn": <EventSeatIcon sx={{ color: "#9c27b0" }} />,
+  "Lịch sử": <HistoryIcon sx={{ color: "#ff5722" }} />,
+  "Kế toán": <CalculateIcon sx={{ color: "#3f51b5" }} />,
+  "Thu ngân": <StorefrontIcon sx={{ color: "#4caf50" }} />,
+  "Công việc": <AssignmentIcon sx={{ color: "#f44336" }} />,
+  "Khách hàng": <PeopleIcon sx={{ color: "#ff5722" }} />,
+  "Nhân sự": <BadgeIcon sx={{ color: "#795548" }} />,
+  "Báo cáo": <BarChartIcon sx={{ color: "#607d8b" }} />,
+};
 
 interface SidebarProps {
   open: boolean;
   onToggle: () => void;
 }
 
-// ...  (giữ nguyên phần import và menuItems)
-
 export default function Sidebar({ open, onToggle }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAccount();
+
+  const role = (user?.role ?? "CUSTOMER") as AppRole;
+  const menuItems = getMenuItemsForRole(role);
+  const homePath = getDefaultPathForRole(role);
+
+  const isSelected = (path: string) =>
+    location.pathname === path || location.pathname.startsWith(`${path}/`);
 
   return (
     <Drawer
@@ -105,13 +73,12 @@ export default function Sidebar({ open, onToggle }: SidebarProps) {
           boxSizing: "border-box",
           transition: "width 0.3s",
           overflowX: "auto",
-          overflowY: "auto", // Đảm bảo luôn có scroll dọc nếu cần
+          overflowY: "auto",
           borderRight: "1px solid #e0e0e0",
           bgcolor: "#ffffff",
         },
       }}
     >
-      {/* Logo Section với background */}
       <Box
         sx={{
           p: 2,
@@ -125,7 +92,6 @@ export default function Sidebar({ open, onToggle }: SidebarProps) {
           borderBottom: "1px solid #e0e0e0",
         }}
       >
-        {/* Logo iBall Billiard */}
         <Box
           sx={{
             display: "flex",
@@ -140,7 +106,7 @@ export default function Sidebar({ open, onToggle }: SidebarProps) {
               bgcolor: "rgba(0, 0, 0, 0.04)",
             },
           }}
-          onClick={() => navigate("/marketing")}
+          onClick={() => navigate(homePath)}
         >
           <img
             src="/Iball_logo-removebg-preview.png"
@@ -154,7 +120,6 @@ export default function Sidebar({ open, onToggle }: SidebarProps) {
           />
         </Box>
 
-        {/* Menu Toggle Button */}
         <IconButton
           onClick={onToggle}
           size="small"
@@ -170,7 +135,6 @@ export default function Sidebar({ open, onToggle }: SidebarProps) {
         </IconButton>
       </Box>
 
-      {/* Menu Items */}
       <List sx={{ pt: 2, px: 1 }}>
         {menuItems.map((item) => (
           <ListItem
@@ -179,7 +143,7 @@ export default function Sidebar({ open, onToggle }: SidebarProps) {
             sx={{ display: "block", mb: 0.5 }}
           >
             <ListItemButton
-              selected={location.pathname === item.path}
+              selected={isSelected(item.path)}
               onClick={() => navigate(item.path)}
               sx={{
                 minHeight: 48,
@@ -204,7 +168,7 @@ export default function Sidebar({ open, onToggle }: SidebarProps) {
                   justifyContent: "center",
                 }}
               >
-                {item.icon}
+                {MENU_ICONS[item.text]}
               </ListItemIcon>
               {open && <ListItemText primary={item.text} />}
             </ListItemButton>

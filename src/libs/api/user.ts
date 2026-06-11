@@ -22,7 +22,9 @@ export async function getUserPagination(page: number, limit: number) {
 
 export async function deleteUserById(id: string) {
   try {
-    const response = await agent.delete<string>(`/users/${id}`);
+    const response = await agent.delete<{ message: string; softDeleted?: boolean }>(
+      `/users/${id}`,
+    );
     return response.data;
   } catch (error) {
     console.log(error);

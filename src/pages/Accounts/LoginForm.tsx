@@ -12,6 +12,12 @@ import {
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useAccount } from "../../libs/hooks/useAccount";
+import {
+  getDefaultPathForRole,
+  type AppRole,
+} from "../../libs/utils/roleAccess";
+import { useSnackbar } from "../../libs/context/SnackbarContext";
+import { getApiErrorMessage } from "../../libs/utils/apiError";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -22,6 +28,7 @@ export default function LoginPage() {
 
   const { loginUser } = useAccount();
   const navigate = useNavigate();
+  const { showSuccess, showError } = useSnackbar();
 
   const handleChange = (e: { target: { name: string; value: string } }) => {
     setCredentials({ ...credentials, [e.target.name]: e.target.value });
@@ -32,10 +39,12 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      await loginUser.mutateAsync(credentials);
-      navigate("/marketing");
+      const result = await loginUser.mutateAsync(credentials);
+      showSuccess("Đăng nhập thành công!");
+      const role = (result?.user?.role ?? "CUSTOMER") as AppRole;
+      navigate(getDefaultPathForRole(role));
     } catch (error) {
-      // Xử lý lỗi đăng nhập ở đây (ví dụ: hiển thị thông báo)
+      showError(getApiErrorMessage(error, "Đăng nhập thất bại!"));
       console.error("Đăng nhập thất bại", error);
     }
   };

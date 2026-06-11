@@ -8,24 +8,17 @@ import {
   Paper,
   TextField,
   Typography,
-  Snackbar,
-  Alert,
 } from "@mui/material";
 import { usePassword } from "../../libs/hooks/usePassword";
+import { useSnackbar } from "../../libs/context/SnackbarContext";
+import { getApiErrorMessage } from "../../libs/utils/apiError";
 
 function ChangePasswordPage() {
   const navigate = useNavigate();
   // const { user } = useAccount();
   const { id } = useParams();
   const { changeUserPassword } = usePassword();
-  // const isEditable = user?.id === id || user?.role === "ADMIN";
-
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "success" as "success" | "error",
-  });
-
+  const { showSuccess, showError } = useSnackbar();
 
   // Form State
   const [formValue, setFormValue] = useState({
@@ -45,35 +38,18 @@ function ChangePasswordPage() {
     e.preventDefault();
     const passwordData = { ...formValue };
     if (formValue.newPassword !== formValue.confirmNewPassword) {
-      setSnackbar({
-        open: true,
-        message: "Mật khẩu mới và xác nhận không khớp!",
-        severity: "error",
-      });
+      showError("Mật khẩu mới và xác nhận không khớp!");
       return;
     }
     changeUserPassword(
       { id: id!, passwordChangeRequest: passwordData },
       {
         onSuccess: () => {
-          setSnackbar({
-            open: true,
-            message: "Đổi mật khẩu thành công!",
-            severity: "success",
-          });
-          // Chỉ navigate sau khi snackbar đã hiển thị xong
-          setTimeout(() => {
-            navigate(`/profile/${id}/password-change`);
-          }, 2000);
+          showSuccess("Đổi mật khẩu thành công!");
+          navigate(`/profile/${id}`);
         },
-        onError: (error: any) => {
-          setSnackbar({
-            open: true,
-            message:
-              error?.response?.data?.message ||
-              "Đã xảy ra lỗi khi đổi mật khẩu.",
-            severity: "error",
-          });
+        onError: (error) => {
+          showError(getApiErrorMessage(error, "Đã xảy ra lỗi khi đổi mật khẩu."));
         },
       },
     );
@@ -85,8 +61,7 @@ function ChangePasswordPage() {
   };
 
   return (
-    <>
-      <Paper sx={{ borderRadius: 3, padding: 3 }}>
+    <Paper sx={{ borderRadius: 3, padding: 3 }}>
         <Typography variant="h5" gutterBottom color="primary" sx={{ mb: 3 }}>
           Bạn muốn thay đổi mật khẩu?
         </Typography>
@@ -127,23 +102,7 @@ function ChangePasswordPage() {
             </Button>
           </Box>
         </Box>
-      </Paper>
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-      >
-        <Alert
-          severity={snackbar.severity}
-          sx={{ width: "100%" }}
-          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-          variant="filled"
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </>
+    </Paper>
   );
 }
 

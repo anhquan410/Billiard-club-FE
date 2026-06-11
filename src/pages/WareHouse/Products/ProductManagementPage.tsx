@@ -23,11 +23,6 @@ import {
   Menu,
   ListItemIcon,
   ListItemText,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from "@mui/icons-material/Add";
@@ -45,9 +40,14 @@ import {
   useProductPagination,
 } from "../../../libs/hooks/useProduct";
 import type { ProductItem } from "../../../libs/types/warehouse.type";
+import DeleteProductDialog from "../../../components/WareHouse/DeleteProductDialog";
+import { getCategoryLabel } from "../../../libs/utils/productLabels";
+import { useSnackbar } from "../../../libs/context/SnackbarContext";
+import PageLoader from "../../../components/common/PageLoader";
 
 export default function ProductManagementPage() {
   const navigate = useNavigate();
+  const { showSuccess, showError } = useSnackbar();
   const [searchText, setSearchText] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
   const page = Number(searchParams.get("page")) || 1;
@@ -71,11 +71,16 @@ export default function ProductManagementPage() {
 
   const handleConfirmDelete = () => {
     if (deleteId) {
-      // Thực hiện xóa ở đây
-      deleteProductById(deleteId);
-      // Sau khi xóa thành công:
-      setOpenDialog(false);
-      setDeleteId(null);
+      deleteProductById(deleteId, {
+        onSuccess: () => {
+          showSuccess("Xóa sản phẩm thành công!");
+          setOpenDialog(false);
+          setDeleteId(null);
+        },
+        onError: () => {
+          showError("Xóa sản phẩm thất bại!");
+        },
+      });
     }
   };
 
@@ -109,13 +114,15 @@ export default function ProductManagementPage() {
   };
 
   // Luôn truyền đủ 3 tham số cho useProduct, nếu không có category thì truyền rỗng chuỗi
-  const { paginatedProducts } = useProductPagination(
+  const { paginatedProducts, isLoadingProducts } = useProductPagination(
     page,
     limit,
     category !== "ALL" ? category : "",
   );
 
-  if (!paginatedProducts) return <div>Loading...</div>;
+  if (isLoadingProducts || !paginatedProducts) {
+    return <PageLoader color="#ff9800" />;
+  }
 
   // Xử lý đổi trang
   const handlePageChange = (_e: React.ChangeEvent<unknown>, value: number) => {
@@ -153,32 +160,6 @@ export default function ProductManagementPage() {
         limit: limit.toString(),
         category: newCategory,
       });
-    }
-  };
-
-  // Hàm chuyển category code sang tên hiển thị
-  const getCategoryLabel = (category: string) => {
-    switch (category) {
-      case "FOOD":
-        return "Đồ ăn";
-      case "BEVERAGE":
-        return "Nước ngọt không gas";
-      case "SERVICE":
-        return "Dịch vụ";
-      case "CIGARETTE":
-        return "Thuốc lá";
-      case "OTHER":
-        return "Khác";
-      case "EQUIPMENT":
-        return "Thiết bị";
-      case "SODA":
-        return "Nước ngọt có gas";
-      case "COFFEE":
-        return "Cà phê";
-      case "BEER":
-        return "Bia";
-      default:
-        return category;
     }
   };
 
@@ -535,27 +516,11 @@ export default function ProductManagementPage() {
           </FormControl>
         </Box>
       </Box>
-      {/* Dialog xác nhận xóa */}
-      <Dialog open={openDialog} onClose={handleCancelDelete} disableScrollLock>
-        <DialogTitle>Xác nhận xóa</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Bạn có chắc chắn muốn xóa sản phẩm này không?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelDelete} color="inherit">
-            Hủy
-          </Button>
-          <Button
-            onClick={handleConfirmDelete}
-            color="error"
-            variant="contained"
-          >
-            Xóa
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <DeleteProductDialog
+        open={openDialog}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+      />
     </>
   );
 }

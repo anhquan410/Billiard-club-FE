@@ -16,6 +16,9 @@ import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { useAccount } from "../../libs/hooks/useAccount";
 import { getTableSession } from "../../libs/api/table";
+import { useSnackbar } from "../../libs/context/SnackbarContext";
+import { getApiErrorMessage } from "../../libs/utils/apiError";
+import PageLoader from "../../components/common/PageLoader";
 
 export default function StorePage() {
   const navigate = useNavigate();
@@ -24,6 +27,7 @@ export default function StorePage() {
   const [_selectedTable, setSelectedTable] = useState<TableData | null>(null);
   const { tables, isLoadingTables, startTableSessionAsync } = useTable();
   const { user } = useAccount();
+  const { showSuccess, showError } = useSnackbar();
   // console.log(user);
 
   // Nếu đang ở child route (/store/table), chỉ render Outlet
@@ -33,7 +37,7 @@ export default function StorePage() {
 
   // console.log(products);
   if (isLoadingTables) {
-    return <div>Loading tables...</div>;
+    return <PageLoader color="#4caf50" />;
   }
 
   const normalTables = tables.filter(
@@ -73,17 +77,15 @@ export default function StorePage() {
       // Gọi API start session và nhận data
       const sessionData = await startTableSessionAsync({
         tableId: table.id,
-        staffId: user?.id || "",
         note: "",
       });
 
-      console.log("Created session data for AVAILABLE table:", sessionData);
-
-      // Navigate và truyền sessionData qua state
+      showSuccess("Mở bàn thành công!");
       navigate(`/store/table/${table.id}`, {
         state: { sessionData },
       });
     } catch (error) {
+      showError(getApiErrorMessage(error, "Không thể mở bàn. Vui lòng thử lại!"));
       console.error("Failed to start session:", error);
     }
   };

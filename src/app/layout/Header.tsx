@@ -22,6 +22,7 @@ import VpnKeyIcon from "@mui/icons-material/VpnKey";
 import { useNavigate } from "react-router-dom";
 import { useAccount } from "../../libs/hooks/useAccount";
 import { useProfile } from "../../libs/hooks/useProfile";
+import { useSnackbar } from "../../libs/context/SnackbarContext";
 
 interface HeaderProps {
   sidebarWidth: number;
@@ -35,6 +36,7 @@ export default function Header({ sidebarWidth }: HeaderProps) {
   const navigate = useNavigate();
   const { user, logoutUser } = useAccount();
   const { profile } = useProfile(user?.id);
+  const { showSuccess } = useSnackbar();
 
   const handleAvatarClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -48,7 +50,11 @@ export default function Header({ sidebarWidth }: HeaderProps) {
     handleClose();
   };
   const handleLogout = () => {
-    logoutUser.mutate();
+    logoutUser.mutate(undefined, {
+      onSuccess: () => {
+        showSuccess("Đăng xuất thành công!");
+      },
+    });
     handleClose();
   };
   const handleChangePassword = () => {

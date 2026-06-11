@@ -11,12 +11,14 @@ import WarehousePage from "../../pages/WareHouse/WarehousePage";
 import App from "../layout/App";
 import MainLayout from "../layout/MainLayout";
 import RequireAuth from "./RequireAuth";
+import RoleGuard from "./RoleGuard";
+import BookingRoute from "./BookingRoute";
 import ProfilePage from "../../pages/User/ProfilePage";
 import ChangePasswordPage from "../../pages/User/ChangePasswordPage";
 import HrPage from "../../pages/HumanResources/HrPage";
 import CustomerPage from "../../pages/Customer/CustomerPage";
 import ReportPage from "../../pages/Report/ReportPage";
-import PurchasingPage from "../../pages/Purchasing/PurchasingPage";
+import PlayHistoryPage from "../../pages/Customer/PlayHistoryPage";
 import AccountingPage from "../../pages/Accounting/AccountingPage";
 import TasksPage from "../../pages/Tasks/TasksPage";
 import ProductDetailPage from "../../pages/WareHouse/Products/ProductDetailPage";
@@ -42,44 +44,50 @@ export const router = createBrowserRouter([
           {
             element: <MainLayout />,
             children: [
-              { path: "marketing", element: <MarketingPage /> },
-              { path: "sales", element: <SalesPage /> },
               {
-                path: "warehouse",
-                element: <WarehousePage />,
+                element: <RoleGuard />,
                 children: [
-                  { index: true, element: <InventoryManagementPage /> },
-                  { path: "import", element: <ImportReceipts /> },
-                  { path: "export", element: <ExportReceipts /> },
-                  { path: "products", element: <ProductManagementPage /> },
-                  { path: "products/:id", element: <ProductDetailPage /> },
+                  { path: "marketing", element: <MarketingPage /> },
+                  { path: "sales", element: <SalesPage /> },
                   {
-                    path: "products/create-product",
-                    element: <CreateProductForm />,
+                    path: "warehouse",
+                    element: <WarehousePage />,
+                    children: [
+                      { index: true, element: <InventoryManagementPage /> },
+                      { path: "import", element: <ImportReceipts /> },
+                      { path: "export", element: <ExportReceipts /> },
+                      { path: "products", element: <ProductManagementPage /> },
+                      { path: "products/:id", element: <ProductDetailPage /> },
+                      {
+                        path: "products/create-product",
+                        element: <CreateProductForm />,
+                      },
+                      { path: "import/create", element: <ReceiptForm /> },
+                    ],
                   },
-                  { path: "import/create", element: <ReceiptForm /> },
+                  { path: "bookings", element: <BookingRoute /> },
+                  { path: "history", element: <PlayHistoryPage /> },
+                  { path: "accounting", element: <AccountingPage /> },
+                  {
+                    path: "store",
+                    element: <StorePage />,
+                    children: [
+                      { index: true, element: <div /> },
+                      { path: "table/:id", element: <TableDetailPage /> },
+                    ],
+                  },
+                  { path: "tasks", element: <TasksPage /> },
+                  { path: "customers", element: <CustomerPage /> },
+                  { path: "hr", element: <HrPage /> },
+                  { path: "reports", element: <ReportPage /> },
+                  { path: "profile/:id", element: <ProfilePage /> },
+                  {
+                    path: "profile/:id/password-change",
+                    element: <ChangePasswordPage />,
+                  },
+                  { path: "create-user", element: <CreateUserForm /> },
                 ],
               },
-              { path: "purchasing", element: <PurchasingPage /> },
-              { path: "accounting", element: <AccountingPage /> },
-              {
-                path: "store",
-                element: <StorePage />,
-                children: [
-                  { index: true, element: <div /> },
-                  { path: "table/:id", element: <TableDetailPage /> },
-                ],
-              },
-              { path: "tasks", element: <TasksPage /> },
-              { path: "customers", element: <CustomerPage /> },
-              { path: "hr", element: <HrPage /> },
-              { path: "reports", element: <ReportPage /> },
-              { path: "profile/:id", element: <ProfilePage /> },
-              {
-                path: "profile/:id/password-change",
-                element: <ChangePasswordPage />,
-              },
-              { path: "create-user", element: <CreateUserForm /> },
             ],
           },
         ],

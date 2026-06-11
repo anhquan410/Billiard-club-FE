@@ -25,6 +25,7 @@ import * as React from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useReceiptPagination } from "../../../libs/hooks/useReceipt";
 import { vi } from "date-fns/locale";
+import PageLoader from "../../../components/common/PageLoader";
 
 export default function ImportReceipts() {
   const [searchText, setSearchText] = React.useState("");
@@ -55,7 +56,7 @@ export default function ImportReceipts() {
   }, []);
 
   if (isLoadingStockMovements) {
-    return <div>Loading...</div>;
+    return <PageLoader color="#ff9800" />;
   }
 
   // Format ngày giờ theo định dạng Việt Nam

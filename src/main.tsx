@@ -9,6 +9,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "react-router-dom";
 import { router } from "./app/router/Routes";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { SnackbarProvider } from "./libs/context/SnackbarProvider";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -23,8 +24,10 @@ const queryClient = new QueryClient({
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-      <ReactQueryDevtools initialIsOpen />
+      <SnackbarProvider>
+        <RouterProvider router={router} />
+        <ReactQueryDevtools initialIsOpen />
+      </SnackbarProvider>
     </QueryClientProvider>
   </StrictMode>,
 );

@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
-  Alert,
   Box,
   Button,
   FormControl,
@@ -8,7 +7,6 @@ import {
   MenuItem,
   Paper,
   Select,
-  Snackbar,
   TextField,
   Typography,
 } from "@mui/material";
@@ -16,6 +14,8 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAccount } from "../../libs/hooks/useAccount";
 import { useProduct } from "../../libs/hooks/useProduct";
+import { useSnackbar } from "../../libs/context/SnackbarContext";
+import PageLoader from "../common/PageLoader";
 import type {
   ProductCategory,
   ProductStatus,
@@ -26,12 +26,7 @@ function CreateProductForm() {
   const { user } = useAccount();
   const isEditable = user?.role === "ADMIN";
   const { createProduct, isLoadingProduct } = useProduct();
-
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "success" as "success" | "error",
-  });
+  const { showSuccess, showError } = useSnackbar();
 
   // Form State
   const [formValue, setFormValue] = useState({
@@ -69,37 +64,24 @@ function CreateProductForm() {
       { product: productData },
       {
         onSuccess: () => {
-          setSnackbar({
-            open: true,
-            message: "Tạo sản phẩm thành công!",
-            severity: "success",
-          });
+          showSuccess("Tạo sản phẩm thành công!");
           navigate(`/warehouse/products`);
         },
-        onError: (error, variable, context) => {
-          setSnackbar({
-            open: true,
-            message: "Tạo sản phẩm thất bại!",
-            severity: "error",
-          });
-          console.log(error, variable, context);
+        onError: (error) => {
+          showError("Tạo sản phẩm thất bại!");
+          console.error(error);
         },
       },
     );
   };
 
   if (isLoadingProduct) {
-    return (
-      <Box display="flex" justifyContent="center" p={4}>
-        <Typography>Loading...</Typography>
-      </Box>
-    );
+    return <PageLoader color="#ff9800" />;
   }
 
   if (isEditable) {
     return (
-      <>
-        <Paper sx={{ borderRadius: 3, padding: 3, pb: 7 }}>
+      <Paper sx={{ borderRadius: 3, padding: 3, pb: 7 }}>
           <Typography variant="h5" gutterBottom color="primary" sx={{ mb: 3 }}>
             Chi tiết sản phẩm
           </Typography>
@@ -205,23 +187,7 @@ function CreateProductForm() {
               </Button>
             </Box>
           </Box>
-        </Paper>
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={3000}
-          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-        >
-          <Alert
-            severity={snackbar.severity}
-            sx={{ width: "100%" }}
-            onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-            variant="filled"
-          >
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
-      </>
+      </Paper>
     );
   }
 }

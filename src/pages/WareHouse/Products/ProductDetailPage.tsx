@@ -1,7 +1,6 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
-  Alert,
   Box,
   Button,
   FormControl,
@@ -9,7 +8,6 @@ import {
   MenuItem,
   Paper,
   Select,
-  Snackbar,
   TextField,
   Typography,
 } from "@mui/material";
@@ -17,6 +15,8 @@ import { useProduct } from "../../../libs/hooks/useProduct";
 import { useEffect, useState } from "react";
 import { useAccount } from "../../../libs/hooks/useAccount";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { useSnackbar } from "../../../libs/context/SnackbarContext";
+import PageLoader from "../../../components/common/PageLoader";
 
 function ProductDetailPage() {
   const navigate = useNavigate();
@@ -24,18 +24,14 @@ function ProductDetailPage() {
   const { id } = useParams();
   const { product, isLoadingProduct, updateProduct } = useProduct(id);
   const isEditable = user?.role === "ADMIN";
-
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "success" as "success" | "error",
-  });
+  const { showSuccess, showError } = useSnackbar();
 
   // Form State
   const [formValue, setFormValue] = useState({
     name: product?.name || "",
     category: product?.category || "",
     price: product?.price || "",
+    unit: product?.unit || "",
     status: product?.status || "",
     description: product?.description || "",
   });
@@ -47,6 +43,7 @@ function ProductDetailPage() {
         name: product.name || "",
         category: product.category || "",
         price: product.price || "",
+        unit: product.unit || "",
         status: product.status || "",
         description: product.description || "",
       });
@@ -68,7 +65,7 @@ function ProductDetailPage() {
       costPrice: product.costPrice,
       stock: product.stock,
       minStock: product.minStock,
-      unit: product.unit,
+      unit: formValue.unit,
       image: product.image,
       // Add any other required fields from ProductItem here if needed
     };
@@ -76,19 +73,11 @@ function ProductDetailPage() {
       { id: id as string, product: productData },
       {
         onSuccess: () => {
-          setSnackbar({
-            open: true,
-            message: "Cập nhật thành công!",
-            severity: "success",
-          });
+          showSuccess("Cập nhật sản phẩm thành công!");
           navigate(`/warehouse/products`);
         },
         onError: (error, variable, context) => {
-          setSnackbar({
-            open: true,
-            message: "Cập nhật thất bại!",
-            severity: "error",
-          });
+          showError("Cập nhật sản phẩm thất bại!");
           console.log(error, variable, context);
         },
       },
@@ -96,11 +85,7 @@ function ProductDetailPage() {
   };
 
   if (isLoadingProduct) {
-    return (
-      <Box display="flex" justifyContent="center" p={4}>
-        <Typography>Loading...</Typography>
-      </Box>
-    );
+    return <PageLoader color="#ff9800" />;
   }
 
   if (!product) {
@@ -112,8 +97,7 @@ function ProductDetailPage() {
   }
 
   return (
-    <>
-      <Paper sx={{ borderRadius: 3, padding: 3 }}>
+    <Paper sx={{ borderRadius: 3, padding: 3 }}>
         <Typography variant="h5" gutterBottom color="primary" sx={{ mb: 3 }}>
           Chi tiết sản phẩm
         </Typography>
@@ -160,6 +144,13 @@ function ProductDetailPage() {
             fullWidth
             onChange={handleInputChange}
           />
+          <TextField
+            name="unit"
+            label="Đơn vị (cái, chai, lon...)"
+            value={formValue.unit || ""}
+            fullWidth
+            onChange={handleInputChange}
+          />
 
           <FormControl fullWidth>
             <InputLabel id="status-label">Trạng thái</InputLabel>
@@ -201,23 +192,7 @@ function ProductDetailPage() {
             </Button>
           </Box>
         </Box>
-      </Paper>
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-      >
-        <Alert
-          severity={snackbar.severity}
-          sx={{ width: "100%" }}
-          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-          variant="filled"
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </>
+    </Paper>
   );
 }
 

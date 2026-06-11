@@ -1,11 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
-  Alert,
   Autocomplete,
   Box,
   Button,
   Paper,
-  Snackbar,
   TextField,
   Typography,
 } from "@mui/material";
@@ -13,6 +11,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAccount } from "../../libs/hooks/useAccount";
 import { useProduct } from "../../libs/hooks/useProduct";
+import { useSnackbar } from "../../libs/context/SnackbarContext";
 import type {
   MovementType,
   ProductItem,
@@ -25,12 +24,7 @@ function ReceiptForm() {
   const isEditable = user?.role === "ADMIN";
   const { products, isLoadingProducts } = useProduct();
   const { createImportStockMovement } = useReceipt();
-
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "success" as "success" | "error",
-  });
+  const { showSuccess, showError } = useSnackbar();
 
   // Form State
   const [formValue, setFormValue] = useState({
@@ -56,11 +50,7 @@ function ReceiptForm() {
   const handleSubmit = (e: any) => {
     e.preventDefault();
     if (!selectedProduct) {
-      setSnackbar({
-        open: true,
-        message: "Vui lòng chọn sản phẩm",
-        severity: "error",
-      });
+      showError("Vui lòng chọn sản phẩm");
       return;
     }
 
@@ -77,23 +67,12 @@ function ReceiptForm() {
       { data: receiptData, staffId: user?.id || "" },
       {
         onSuccess: () => {
-          setSnackbar({
-            open: true,
-            message: "Cập nhật thành công!",
-            severity: "success",
-          });
-          // Đợi 1.5 giây để người dùng nhìn thấy thông báo trước khi navigate
-          setTimeout(() => {
-            navigate("/warehouse/import");
-          }, 1000);
+          showSuccess("Tạo phiếu nhập thành công!");
+          navigate("/warehouse/import");
         },
-        onError: (error, variable, context) => {
-          setSnackbar({
-            open: true,
-            message: "Cập nhật thất bại!",
-            severity: "error",
-          });
-          console.log(error, variable, context);
+        onError: (error) => {
+          showError("Tạo phiếu nhập thất bại!");
+          console.error(error);
         },
       },
     );
@@ -101,8 +80,7 @@ function ReceiptForm() {
 
   if (isEditable) {
     return (
-      <>
-        <Paper sx={{ borderRadius: 3, padding: 3, pb: 7 }}>
+      <Paper sx={{ borderRadius: 3, padding: 3, pb: 7 }}>
           <Typography variant="h5" gutterBottom color="primary" sx={{ mb: 3 }}>
             Tạo phiếu nhập
           </Typography>
@@ -203,23 +181,7 @@ function ReceiptForm() {
               </Button>
             </Box>
           </Box>
-        </Paper>
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={3000}
-          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-        >
-          <Alert
-            severity={snackbar.severity}
-            sx={{ width: "100%" }}
-            onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-            variant="filled"
-          >
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
-      </>
+      </Paper>
     );
   }
 }

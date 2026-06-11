@@ -33,11 +33,13 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogActions from "@mui/material/DialogActions";
+import { useSnackbar } from "../../libs/context/SnackbarContext";
 
 export default function StaffPage() {
   const navigate = useNavigate();
   const { user } = useAccount();
   const { users, deleteUserById } = useUser();
+  const { showSuccess, showError } = useSnackbar();
   // State cho select quyền
   const [roleFilter, setRoleFilter] = useState("ALL");
   const [nameFilter, setNameFilter] = useState("");
@@ -73,11 +75,16 @@ export default function StaffPage() {
 
   const handleConfirmDelete = () => {
     if (deleteId) {
-      // Thực hiện xóa ở đây
-      deleteUserById(deleteId);
-      // Sau khi xóa thành công:
-      setOpenDialog(false);
-      setDeleteId(null);
+      deleteUserById(deleteId, {
+        onSuccess: (data) => {
+          showSuccess(data?.message ?? "Xóa nhân viên thành công!");
+          setOpenDialog(false);
+          setDeleteId(null);
+        },
+        onError: () => {
+          showError("Xóa nhân viên thất bại!");
+        },
+      });
     }
   };
 

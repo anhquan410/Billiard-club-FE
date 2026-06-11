@@ -25,6 +25,7 @@ import { useReceiptPagination } from "../../../libs/hooks/useReceipt";
 import { useSearchParams } from "react-router";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
+import PageLoader from "../../../components/common/PageLoader";
 
 export default function ExportReceipts() {
   const [searchText, setSearchText] = React.useState("");
@@ -55,7 +56,7 @@ export default function ExportReceipts() {
   }, []);
 
   if (isLoadingStockMovements) {
-    return <div>Loading...</div>;
+    return <PageLoader color="#ff9800" />;
   }
   // console.log(paginatedStockMovements);
 

@@ -1,12 +1,12 @@
-import { Typography } from "@mui/material";
 import { Navigate, Outlet } from "react-router";
 import { useAccount } from "../../libs/hooks/useAccount";
+import PageLoader from "../../components/common/PageLoader";
 
 export default function RequireAuth() {
   const { user, isLoadingUser } = useAccount();
 
   if (isLoadingUser) {
-    return <Typography>Loading...</Typography>;
+    return <PageLoader minHeight="100vh" />;
   }
 
   if (!user) {

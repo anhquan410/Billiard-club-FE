@@ -14,10 +14,9 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Snackbar,
-  Alert,
 } from "@mui/material";
 import type { Profile } from "../../libs/types";
+import { useSnackbar } from "../../libs/context/SnackbarContext";
 
 function ProfilePage() {
   const navigate = useNavigate();
@@ -25,12 +24,7 @@ function ProfilePage() {
   const { id } = useParams();
   const { profile, updateProfile } = useProfile(id);
   const isEditable = user?.id === id || user?.role === "ADMIN";
-
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "success" as "success" | "error",
-  });
+  const { showSuccess, showError } = useSnackbar();
 
   // Form State
   const [formValue, setFormValue] = useState({
@@ -70,32 +64,23 @@ function ProfilePage() {
       { id: id as string, profile: profileData as unknown as Profile },
       {
         onSuccess: () => {
-          setSnackbar({
-            open: true,
-            message: "Cập nhật thành công!",
-            severity: "success",
-          });
+          showSuccess("Cập nhật hồ sơ thành công!");
           if (profileData.role === "CUSTOMER") {
             navigate("/customers");
           } else {
             navigate("/hr");
           }
         },
-        onError: (error, variable, context) => {
-          setSnackbar({
-            open: true,
-            message: "Cập nhật thất bại!",
-            severity: "error",
-          });
-          console.log(error, variable, context);
+        onError: (error) => {
+          showError("Cập nhật hồ sơ thất bại!");
+          console.error(error);
         },
       },
     );
   };
 
   return (
-    <>
-      <Paper sx={{ borderRadius: 3, padding: 3 }}>
+    <Paper sx={{ borderRadius: 3, padding: 3 }}>
         <Typography variant="h5" gutterBottom color="primary" sx={{ mb: 3 }}>
           Edit Profile
         </Typography>
@@ -182,23 +167,7 @@ function ProfilePage() {
             </Button>
           </Box>
         </Box>
-      </Paper>
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-      >
-        <Alert
-          severity={snackbar.severity}
-          sx={{ width: "100%" }}
-          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-          variant="filled"
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </>
+    </Paper>
   );
 }
 

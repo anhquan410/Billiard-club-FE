@@ -23,14 +23,9 @@ export async function getTableById(id: string) {
 }
 
 // Start session for a table
-export async function startTableSession(
-  tableId: string,
-  staffId: string,
-  note?: string,
-) {
+export async function startTableSession(tableId: string, note?: string) {
   try {
     const response = await agent.post(`/tables/${tableId}/start-session`, {
-      staffId,
       note,
     });
     return response.data;
@@ -102,6 +97,23 @@ export async function removeServiceFromTable(
       {
         data: { serviceId },
       },
+    );
+    return response.data;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+}
+
+export async function updateServiceQuantity(
+  sessionId: string,
+  serviceId: string,
+  quantity: number,
+) {
+  try {
+    const response = await agent.post(
+      `/table-sessions/${sessionId}/update-service-quantity`,
+      { serviceId, quantity },
     );
     return response.data;
   } catch (error) {

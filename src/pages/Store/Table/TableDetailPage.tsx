@@ -23,6 +23,7 @@ import {
   DialogActions,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
+import PageLoader from "../../../components/common/PageLoader";
 import AddIcon from "@mui/icons-material/Add";
 import PrintIcon from "@mui/icons-material/Print";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
@@ -34,6 +35,7 @@ import type { ProductItem } from "../../../libs/types/warehouse.type";
 import { useParams } from "react-router-dom";
 import { useTable, useTableSession } from "../../../libs/hooks/useTable";
 import PaymentModal from "../../../components/Store/PaymentModal";
+import { useSnackbar } from "../../../libs/context/SnackbarContext";
 
 // Mock data (thay bằng API sau)
 
@@ -45,6 +47,7 @@ export default function TableDetailPage() {
   const [openDialog, setOpenDialog] = useState(false);
   const [open, setOpen] = useState(false);
   const { products } = useProduct();
+  const { showSuccess, showError } = useSnackbar();
   const { id } = useParams<{ id: string }>();
   const { table, isLoadingTable } = useTable(id);
 
@@ -56,6 +59,8 @@ export default function TableDetailPage() {
     isLoadingSession,
     addServiceToTable,
     removeServiceFromTable,
+    updateServiceQuantity,
+    isUpdatingServiceQuantity,
   } = useTableSession(id ?? "");
 
   const service = sessionData?.session?.services || [];
@@ -68,11 +73,18 @@ export default function TableDetailPage() {
       console.error("No active session for this table.");
       return;
     }
-    addServiceToTable({
-      sessionId: sessionData.session.id,
-      productId,
-      quantity: 1,
-    });
+    addServiceToTable(
+      {
+        sessionId: sessionData.session.id,
+        productId,
+        quantity: 1,
+      },
+      {
+        onError: () => {
+          showError("Thêm món thất bại!");
+        },
+      },
+    );
   };
 
   // Handle để xóa sản phẩm khỏi bàn
@@ -83,14 +95,22 @@ export default function TableDetailPage() {
 
   const handleConfirmDelete = () => {
     if (deleteId) {
-      // Thực hiện xóa ở đây
-      removeServiceFromTable({
-        sessionId: sessionData?.session.id ?? "",
-        serviceId: deleteId,
-      });
-      // Sau khi xóa thành công:
-      setOpenDialog(false);
-      setDeleteId(null);
+      removeServiceFromTable(
+        {
+          sessionId: sessionData?.session.id ?? "",
+          serviceId: deleteId,
+        },
+        {
+          onSuccess: () => {
+            showSuccess("Đã xóa món khỏi đơn!");
+            setOpenDialog(false);
+            setDeleteId(null);
+          },
+          onError: () => {
+            showError("Xóa món thất bại!");
+          },
+        },
+      );
     }
   };
 
@@ -99,8 +119,35 @@ export default function TableDetailPage() {
     setDeleteId(null);
   };
 
+  const handleUpdateQuantity = (
+    serviceId: string,
+    currentQty: number,
+    delta: number,
+  ) => {
+    if (!sessionData?.session) return;
+
+    const newQty = currentQty + delta;
+    if (newQty <= 0) {
+      handleRemoveService(serviceId);
+      return;
+    }
+
+    updateServiceQuantity(
+      {
+        sessionId: sessionData.session.id,
+        serviceId,
+        quantity: newQty,
+      },
+      {
+        onError: () => {
+          showError("Cập nhật số lượng thất bại!");
+        },
+      },
+    );
+  };
+
   if (isLoadingTable || isLoadingSession) {
-    return <div>Loading table details...</div>;
+    return <PageLoader color="#4caf50" />;
   }
 
   if (!id) {
@@ -244,18 +291,35 @@ export default function TableDetailPage() {
                             gap={1}
                             justifyContent="center"
                           >
-                            <IconButton size="small">
+                            <IconButton
+                              size="small"
+                              disabled={isUpdatingServiceQuantity}
+                              onClick={() =>
+                                handleUpdateQuantity(
+                                  item.id,
+                                  item.quantity,
+                                  -1,
+                                )
+                              }
+                            >
                               <RemoveIcon />
                             </IconButton>
                             <TextField
                               size="small"
                               value={item.quantity}
                               type="number"
+                              disabled
                               inputProps={{
                                 style: { width: 36, textAlign: "center" },
                               }}
                             />
-                            <IconButton size="small">
+                            <IconButton
+                              size="small"
+                              disabled={isUpdatingServiceQuantity}
+                              onClick={() =>
+                                handleUpdateQuantity(item.id, item.quantity, 1)
+                              }
+                            >
                               <AddIcon />
                             </IconButton>
                           </Box>

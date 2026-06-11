@@ -17,6 +17,8 @@ import {
 } from "@mui/material";
 import { useTableSession } from "../../libs/hooks/useTable";
 import { useNavigate } from "react-router-dom";
+import { useSnackbar } from "../../libs/context/SnackbarContext";
+import { getApiErrorMessage } from "../../libs/utils/apiError";
 
 export default function PaymentModal({
   open,
@@ -32,6 +34,7 @@ export default function PaymentModal({
   tableId: string;
 }) {
   const navigate = useNavigate();
+  const { showSuccess, showError } = useSnackbar();
   const { endTableSessionAsync, isEndingTableSession } =
     useTableSession(tableId);
 
@@ -54,12 +57,12 @@ export default function PaymentModal({
         },
       });
 
+      showSuccess("Thanh toán thành công!");
       onClose();
-      // Navigate về trang store sau khi thanh toán thành công
       navigate("/store");
     } catch (error) {
+      showError(getApiErrorMessage(error, "Thanh toán thất bại. Vui lòng thử lại!"));
       console.error("Payment failed:", error);
-      alert("Thanh toán thất bại. Vui lòng thử lại!");
     }
   };
 

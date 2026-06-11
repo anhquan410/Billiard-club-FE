@@ -9,6 +9,7 @@ import {
   endTableSession as endTableSessionApi,
   addServiceToTable as addServiceToTableApi,
   removeServiceFromTable as removeServiceFromTableApi,
+  updateServiceQuantity as updateServiceQuantityApi,
 } from "../api/table";
 import { PRODUCTS_QUERY_KEY } from "./useProduct";
 import { RECEIPT_QUERY_KEY } from "./useReceipt";
@@ -49,13 +50,11 @@ export const useTable = (id?: string) => {
   } = useMutation({
     mutationFn: ({
       tableId,
-      staffId,
       note,
     }: {
       tableId: string;
-      staffId: string;
       note?: string;
-    }) => startTableSessionApi(tableId, staffId, note),
+    }) => startTableSessionApi(tableId, note),
     onSuccess: (_data, _variables) => {
       // Invalidate queries or update cache as needed
       queryClient.invalidateQueries({
@@ -160,6 +159,27 @@ export const useTableSession = (tableId: string) => {
     });
 
   const {
+    mutate: updateServiceQuantity,
+    isPending: isUpdatingServiceQuantity,
+  } = useMutation({
+    mutationFn: ({
+      sessionId,
+      serviceId,
+      quantity,
+    }: {
+      sessionId: string;
+      serviceId: string;
+      quantity: number;
+    }) => updateServiceQuantityApi(sessionId, serviceId, quantity),
+    onSettled: () => {
+      queryClient.invalidateQueries({
+        queryKey: TABLES_QUERY_KEY.all,
+        refetchType: "all",
+      });
+    },
+  });
+
+  const {
     mutate: removeServiceFromTable,
     isPending: isRemovingServiceFromTable,
   } = useMutation({
@@ -222,6 +242,8 @@ export const useTableSession = (tableId: string) => {
     isAddingServiceToTable,
     removeServiceFromTable,
     isRemovingServiceFromTable,
+    updateServiceQuantity,
+    isUpdatingServiceQuantity,
     endTableSession,
     endTableSessionAsync,
     isEndingTableSession,
