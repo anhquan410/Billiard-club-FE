@@ -29,6 +29,7 @@ import { useState } from "react";
 import ProductDetailDialog from "../../components/WareHouse/ProductDetailDialog";
 import { getCategoryLabel } from "../../libs/utils/productLabels";
 import PageLoader from "../../components/common/PageLoader";
+import { getProductImageUrl } from "../../libs/utils/productImage";
 
 export default function InventoryManagementPage() {
   const navigate = useNavigate();
@@ -175,14 +176,16 @@ export default function InventoryManagementPage() {
                   <TableCell>{index + 1}</TableCell>
                   <TableCell>
                     <Avatar
+                      src={getProductImageUrl(item.imageUrl) ?? undefined}
                       sx={{
                         width: 50,
                         height: 50,
                         bgcolor: "#f5f5f5",
                         fontSize: "24px",
+                        borderRadius: 2,
                       }}
                     >
-                      {item.image}
+                      {!item.imageUrl && (item.image || "📦")}
                     </Avatar>
                   </TableCell>
                   <TableCell>
