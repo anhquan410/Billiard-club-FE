@@ -17,6 +17,7 @@ import {
 } from "@mui/material";
 import type { Profile } from "../../libs/types";
 import { useSnackbar } from "../../libs/context/SnackbarContext";
+import { getRoleLabel } from "../../libs/utils/roleAccess";
 
 function ProfilePage() {
   const navigate = useNavigate();
@@ -128,9 +129,10 @@ function ProfilePage() {
                 onChange={handleInputChange}
                 MenuProps={{ disableScrollLock: true }}
               >
-                <MenuItem value="ADMIN">ADMIN</MenuItem>
-                <MenuItem value="STAFF">STAFF</MenuItem>
-                <MenuItem value="CUSTOMER">CUSTOMER</MenuItem>
+                <MenuItem value="ADMIN">{getRoleLabel("ADMIN")}</MenuItem>
+                <MenuItem value="CASHIER">{getRoleLabel("CASHIER")}</MenuItem>
+                <MenuItem value="STAFF">{getRoleLabel("STAFF")}</MenuItem>
+                <MenuItem value="CUSTOMER">{getRoleLabel("CUSTOMER")}</MenuItem>
               </Select>
             </FormControl>
           ) : (

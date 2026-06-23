@@ -34,6 +34,13 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogActions from "@mui/material/DialogActions";
 import { useSnackbar } from "../../libs/context/SnackbarContext";
+import { getRoleLabel, STAFF_ROLES } from "../../libs/utils/roleAccess";
+
+const roleChipColor: Record<string, string> = {
+  ADMIN: "#34be3b",
+  CASHIER: "#2196f3",
+  STAFF: "#d6d436",
+};
 
 export default function StaffPage() {
   const navigate = useNavigate();
@@ -46,8 +53,8 @@ export default function StaffPage() {
   const [phoneFilter, setPhoneFilter] = useState("");
 
   // Lọc nhân sự theo quyền, tên, sđt
-  const hres = users?.filter(
-    (u: { role: string }) => u.role === "ADMIN" || u.role === "STAFF",
+  const hres = users?.filter((u: { role: string }) =>
+    STAFF_ROLES.includes(u.role as (typeof STAFF_ROLES)[number]),
   );
   const filteredData = hres?.filter((hr: Hr) => {
     const matchRole = roleFilter === "ALL" ? true : hr.role === roleFilter;
@@ -168,8 +175,9 @@ export default function StaffPage() {
               MenuProps={{ disableScrollLock: true }}
             >
               <MenuItem value="ALL">Tất cả</MenuItem>
-              <MenuItem value="ADMIN">Admin</MenuItem>
-              <MenuItem value="STAFF">Nhân viên</MenuItem>
+              <MenuItem value="ADMIN">{getRoleLabel("ADMIN")}</MenuItem>
+              <MenuItem value="CASHIER">{getRoleLabel("CASHIER")}</MenuItem>
+              <MenuItem value="STAFF">{getRoleLabel("STAFF")}</MenuItem>
             </Select>
           </FormControl>
 
@@ -221,9 +229,9 @@ export default function StaffPage() {
                   <TableCell>{hr.phone}</TableCell>
                   <TableCell>
                     <Chip
-                      label={hr.role}
+                      label={getRoleLabel(hr.role)}
                       sx={{
-                        bgcolor: hr.role === "ADMIN" ? "#34be3b" : "#d6d436",
+                        bgcolor: roleChipColor[hr.role] ?? "#9e9e9e",
                         color: "#fff",
                       }}
                     />

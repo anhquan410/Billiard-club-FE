@@ -131,3 +131,16 @@ export const SIDEBAR_MENU: SidebarMenuItem[] = [
 export function getMenuItemsForRole(role: AppRole): SidebarMenuItem[] {
   return SIDEBAR_MENU.filter((item) => item.roles.includes(role));
 }
+
+const ROLE_LABELS: Record<AppRole, string> = {
+  ADMIN: "Admin",
+  CASHIER: "Thu ngân",
+  STAFF: "Nhân viên",
+  CUSTOMER: "Khách hàng",
+};
+
+export function getRoleLabel(role: string): string {
+  return ROLE_LABELS[role as AppRole] ?? role;
+}
+
+export const STAFF_ROLES: AppRole[] = ["ADMIN", "CASHIER", "STAFF"];
