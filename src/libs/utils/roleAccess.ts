@@ -23,6 +23,8 @@ const STAFF_ALLOWED_PREFIXES = [
   "/bookings",
   "/store",
   "/tasks",
+  "/schedule",
+  "/salary",
   "/profile",
 ];
 
@@ -107,6 +109,16 @@ export const SIDEBAR_MENU: SidebarMenuItem[] = [
     roles: ["ADMIN", "CASHIER", "STAFF"],
   },
   {
+    text: "Lịch làm việc",
+    path: "/schedule",
+    roles: ["ADMIN", "CASHIER", "STAFF"],
+  },
+  {
+    text: "Lương",
+    path: "/salary",
+    roles: ["ADMIN", "CASHIER", "STAFF"],
+  },
+  {
     text: "Khách hàng",
     path: "/customers",
     roles: ["ADMIN"],
@@ -131,3 +143,16 @@ export const SIDEBAR_MENU: SidebarMenuItem[] = [
 export function getMenuItemsForRole(role: AppRole): SidebarMenuItem[] {
   return SIDEBAR_MENU.filter((item) => item.roles.includes(role));
 }
+
+const ROLE_LABELS: Record<AppRole, string> = {
+  ADMIN: "Admin",
+  CASHIER: "Thu ngân",
+  STAFF: "Nhân viên",
+  CUSTOMER: "Khách hàng",
+};
+
+export function getRoleLabel(role: string): string {
+  return ROLE_LABELS[role as AppRole] ?? role;
+}
+
+export const STAFF_ROLES: AppRole[] = ["ADMIN", "CASHIER", "STAFF"];

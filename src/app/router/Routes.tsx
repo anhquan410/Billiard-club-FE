@@ -23,6 +23,9 @@ import CustomerBonusPage from "../../pages/Customer/CustomerBonusPage";
 import BonusSettingsPage from "../../pages/Settings/BonusSettingsPage";
 import AccountingPage from "../../pages/Accounting/AccountingPage";
 import TasksPage from "../../pages/Tasks/TasksPage";
+import SchedulePage from "../../pages/Schedule/SchedulePage";
+import SalaryPage from "../../pages/Salary/SalaryPage";
+import PayrollSettingsPage from "../../pages/Settings/PayrollSettingsPage";
 import ProductDetailPage from "../../pages/WareHouse/Products/ProductDetailPage";
 import ImportReceipts from "../../pages/WareHouse/Receipts/ImportReceipts";
 import ExportReceipts from "../../pages/WareHouse/Receipts/ExportReceipts";
@@ -71,6 +74,7 @@ export const router = createBrowserRouter([
                   { path: "history", element: <PlayHistoryPage /> },
                   { path: "bonus", element: <CustomerBonusPage /> },
                   { path: "settings/bonus", element: <BonusSettingsPage /> },
+                  { path: "settings/payroll", element: <PayrollSettingsPage /> },
                   { path: "accounting", element: <AccountingPage /> },
                   {
                     path: "store",
@@ -81,6 +85,8 @@ export const router = createBrowserRouter([
                     ],
                   },
                   { path: "tasks", element: <TasksPage /> },
+                  { path: "schedule", element: <SchedulePage /> },
+                  { path: "salary", element: <SalaryPage /> },
                   { path: "customers", element: <CustomerPage /> },
                   { path: "hr", element: <HrPage /> },
                   { path: "reports", element: <ReportPage /> },

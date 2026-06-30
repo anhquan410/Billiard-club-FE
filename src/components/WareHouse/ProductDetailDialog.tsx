@@ -16,6 +16,7 @@ import {
   getCategoryLabel,
   getStatusLabel,
 } from "../../libs/utils/productLabels";
+import { getProductImageUrl } from "../../libs/utils/productImage";
 
 type ProductDetailDialogProps = {
   product: ProductItem | null;
@@ -51,14 +52,16 @@ export default function ProductDetailDialog({
               }}
             >
               <Avatar
+                src={getProductImageUrl(product.imageUrl) ?? undefined}
                 sx={{
                   width: 72,
                   height: 72,
                   bgcolor: "#f5f5f5",
                   fontSize: "32px",
+                  borderRadius: 2,
                 }}
               >
-                {product.image}
+                {!product.imageUrl && (product.image || "📦")}
               </Avatar>
               <Box>
                 <Typography variant="h6" fontWeight={600}>

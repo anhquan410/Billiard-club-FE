@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import { useUser } from "../../libs/hooks/useUser";
 import { useSnackbar } from "../../libs/context/SnackbarContext";
+import { getRoleLabel } from "../../libs/utils/roleAccess";
 
 function CreateUserForm() {
   const navigate = useNavigate();
@@ -100,9 +101,10 @@ function CreateUserForm() {
                   onChange={handleInputChange}
                   MenuProps={{ disableScrollLock: true }}
                 >
-                  <MenuItem value="ADMIN">ADMIN</MenuItem>
-                  <MenuItem value="STAFF">Nhân viên</MenuItem>
-                  <MenuItem value="CUSTOMER">Khách hàng</MenuItem>
+                  <MenuItem value="ADMIN">{getRoleLabel("ADMIN")}</MenuItem>
+                  <MenuItem value="CASHIER">{getRoleLabel("CASHIER")}</MenuItem>
+                  <MenuItem value="STAFF">{getRoleLabel("STAFF")}</MenuItem>
+                  <MenuItem value="CUSTOMER">{getRoleLabel("CUSTOMER")}</MenuItem>
                 </Select>
               </FormControl>
             ) : (
