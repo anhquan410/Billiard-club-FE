@@ -219,7 +219,11 @@ function AdminSummaryTab({ month }: { month: string }) {
     usePayrollAdjustments(month);
   const [adjustOpen, setAdjustOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<PayrollAdjustment | null>(null);
-  const [editReason, setEditReason] = useState("");
+  const [editForm, setEditForm] = useState({
+    type: "BONUS" as PayrollAdjustmentType,
+    amount: "",
+    reason: "",
+  });
   const [deleteTarget, setDeleteTarget] = useState<PayrollAdjustment | null>(
     null,
   );
@@ -256,20 +260,32 @@ function AdminSummaryTab({ month }: { month: string }) {
 
   const openEditDialog = (adjustment: PayrollAdjustment) => {
     setEditTarget(adjustment);
-    setEditReason(adjustment.reason);
+    setEditForm({
+      type: adjustment.type,
+      amount: String(adjustment.amount),
+      reason: adjustment.reason,
+    });
   };
 
-  const handleUpdateReason = async () => {
+  const closeEditDialog = () => {
+    setEditTarget(null);
+    setEditForm({ type: "BONUS", amount: "", reason: "" });
+  };
+
+  const handleUpdateAdjustment = async () => {
     if (!editTarget) return;
     try {
       await updateAdj.mutateAsync({
         id: editTarget.id,
-        payload: { reason: editReason.trim() },
+        payload: {
+          type: editForm.type,
+          amount: Number(editForm.amount),
+          reason: editForm.reason.trim(),
+        },
         month,
       });
-      showSuccess("Đã cập nhật lý do");
-      setEditTarget(null);
-      setEditReason("");
+      showSuccess("Đã cập nhật thưởng/phạt");
+      closeEditDialog();
     } catch (e) {
       showError(getApiErrorMessage(e));
     }
@@ -392,11 +408,11 @@ function AdminSummaryTab({ month }: { month: string }) {
                     {new Date(a.createdAt).toLocaleDateString("vi-VN")}
                   </TableCell>
                   <TableCell align="center">
-                    <Tooltip title="Sửa lý do">
+                    <Tooltip title="Sửa">
                       <IconButton
                         size="small"
                         onClick={() => openEditDialog(a)}
-                        aria-label="Sửa lý do"
+                        aria-label="Sửa"
                       >
                         <EditIcon fontSize="small" />
                       </IconButton>
@@ -480,36 +496,64 @@ function AdminSummaryTab({ month }: { month: string }) {
 
       <Dialog
         open={!!editTarget}
-        onClose={() => setEditTarget(null)}
+        onClose={closeEditDialog}
         fullWidth
         maxWidth="sm"
       >
-        <DialogTitle>Sửa lý do thưởng / phạt</DialogTitle>
-        <DialogContent sx={{ pt: 1 }}>
+        <DialogTitle>Sửa thưởng / phạt</DialogTitle>
+        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
           {editTarget && (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+            <>
               <Typography variant="body2" color="text.secondary">
-                {editTarget.user?.fullName} ·{" "}
-                {editTarget.type === "BONUS" ? "Thưởng" : "Phạt"} ·{" "}
-                {formatCurrency(editTarget.amount)}
+                Nhân viên: {editTarget.user?.fullName}
               </Typography>
+              <FormControl fullWidth>
+                <InputLabel>Loại</InputLabel>
+                <Select
+                  label="Loại"
+                  value={editForm.type}
+                  onChange={(e) =>
+                    setEditForm((f) => ({
+                      ...f,
+                      type: e.target.value as PayrollAdjustmentType,
+                    }))
+                  }
+                >
+                  <MenuItem value="BONUS">Thưởng</MenuItem>
+                  <MenuItem value="PENALTY">Phạt</MenuItem>
+                </Select>
+              </FormControl>
+              <TextField
+                label="Số tiền (VNĐ)"
+                type="number"
+                value={editForm.amount}
+                onChange={(e) =>
+                  setEditForm((f) => ({ ...f, amount: e.target.value }))
+                }
+              />
               <TextField
                 label="Lý do"
                 multiline
                 minRows={2}
-                value={editReason}
-                onChange={(e) => setEditReason(e.target.value)}
-                autoFocus
+                value={editForm.reason}
+                onChange={(e) =>
+                  setEditForm((f) => ({ ...f, reason: e.target.value }))
+                }
               />
-            </Box>
+            </>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setEditTarget(null)}>Hủy</Button>
+          <Button onClick={closeEditDialog}>Hủy</Button>
           <Button
             variant="contained"
-            onClick={handleUpdateReason}
-            disabled={updateAdj.isPending || !editReason.trim()}
+            onClick={handleUpdateAdjustment}
+            disabled={
+              updateAdj.isPending ||
+              !editForm.reason.trim() ||
+              !editForm.amount ||
+              Number(editForm.amount) < 1
+            }
           >
             Lưu
           </Button>
