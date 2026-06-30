@@ -23,6 +23,8 @@ const STAFF_ALLOWED_PREFIXES = [
   "/bookings",
   "/store",
   "/tasks",
+  "/schedule",
+  "/salary",
   "/profile",
 ];
 
@@ -104,6 +106,16 @@ export const SIDEBAR_MENU: SidebarMenuItem[] = [
   {
     text: "Công việc",
     path: "/tasks",
+    roles: ["ADMIN", "CASHIER", "STAFF"],
+  },
+  {
+    text: "Lịch làm việc",
+    path: "/schedule",
+    roles: ["ADMIN", "CASHIER", "STAFF"],
+  },
+  {
+    text: "Lương",
+    path: "/salary",
     roles: ["ADMIN", "CASHIER", "STAFF"],
   },
   {

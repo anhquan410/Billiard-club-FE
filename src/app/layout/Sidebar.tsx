@@ -25,6 +25,8 @@ import HistoryIcon from "@mui/icons-material/History";
 import StarsIcon from "@mui/icons-material/Stars";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { useAccount } from "../../libs/hooks/useAccount";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import PaymentsIcon from "@mui/icons-material/Payments";
 import {
   getDefaultPathForRole,
   getMenuItemsForRole,
@@ -43,6 +45,8 @@ const MENU_ICONS: Record<string, React.ReactNode> = {
   "Kế toán": <CalculateIcon sx={{ color: "#3f51b5" }} />,
   "Thu ngân": <StorefrontIcon sx={{ color: "#4caf50" }} />,
   "Công việc": <AssignmentIcon sx={{ color: "#f44336" }} />,
+  "Lịch làm việc": <CalendarMonthIcon sx={{ color: "#3f51b5" }} />,
+  "Lương": <PaymentsIcon sx={{ color: "#3f51b5" }} />,
   "Khách hàng": <PeopleIcon sx={{ color: "#ff5722" }} />,
   "Nhân sự": <BadgeIcon sx={{ color: "#795548" }} />,
   "Báo cáo": <BarChartIcon sx={{ color: "#607d8b" }} />,
