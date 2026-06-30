@@ -5,6 +5,7 @@ import type {
   PayrollAdjustment,
   PayrollSettings,
   PayrollSummary,
+  UpdatePayrollAdjustmentPayload,
 } from "../types/payroll.type";
 
 export async function getPayrollSettings() {
@@ -44,6 +45,24 @@ export async function createPayrollAdjustment(
   const response = await agent.post<PayrollAdjustment>(
     "/payroll/admin/adjustments",
     payload,
+  );
+  return response.data;
+}
+
+export async function updatePayrollAdjustment(
+  id: string,
+  payload: UpdatePayrollAdjustmentPayload,
+) {
+  const response = await agent.patch<PayrollAdjustment>(
+    `/payroll/admin/adjustments/${id}`,
+    payload,
+  );
+  return response.data;
+}
+
+export async function deletePayrollAdjustment(id: string) {
+  const response = await agent.delete<{ message: string }>(
+    `/payroll/admin/adjustments/${id}`,
   );
   return response.data;
 }

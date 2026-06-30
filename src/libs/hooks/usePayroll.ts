@@ -1,14 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createPayrollAdjustment,
+  deletePayrollAdjustment,
   getAdminPayrollSummary,
   getMyPayroll,
   getPayrollAdjustments,
   getPayrollSettings,
   getUserPayroll,
+  updatePayrollAdjustment,
   updatePayrollSettings,
 } from "../api/payroll";
-import type { CreatePayrollAdjustmentPayload } from "../types/payroll.type";
+import type {
+  CreatePayrollAdjustmentPayload,
+  UpdatePayrollAdjustmentPayload,
+} from "../types/payroll.type";
 
 export const PAYROLL_QUERY_KEY = {
   all: ["payroll"] as const,
@@ -72,8 +77,52 @@ export function useCreatePayrollAdjustment() {
   return useMutation({
     mutationFn: (payload: CreatePayrollAdjustmentPayload) =>
       createPayrollAdjustment(payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: PAYROLL_QUERY_KEY.all });
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: PAYROLL_QUERY_KEY.adminSummary(variables.month),
+      });
+      queryClient.invalidateQueries({
+        queryKey: PAYROLL_QUERY_KEY.adjustments(variables.month),
+      });
+    },
+  });
+}
+
+export function useUpdatePayrollAdjustment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      payload,
+      month,
+    }: {
+      id: string;
+      payload: UpdatePayrollAdjustmentPayload;
+      month: string;
+    }) => updatePayrollAdjustment(id, payload),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: PAYROLL_QUERY_KEY.adminSummary(variables.month),
+      });
+      queryClient.invalidateQueries({
+        queryKey: PAYROLL_QUERY_KEY.adjustments(variables.month),
+      });
+    },
+  });
+}
+
+export function useDeletePayrollAdjustment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, month }: { id: string; month: string }) =>
+      deletePayrollAdjustment(id),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: PAYROLL_QUERY_KEY.adminSummary(variables.month),
+      });
+      queryClient.invalidateQueries({
+        queryKey: PAYROLL_QUERY_KEY.adjustments(variables.month),
+      });
     },
   });
 }

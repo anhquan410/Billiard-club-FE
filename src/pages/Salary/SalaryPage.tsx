@@ -10,6 +10,7 @@ import {
   DialogTitle,
   FormControl,
   Grid,
+  IconButton,
   InputLabel,
   MenuItem,
   Paper,
@@ -23,16 +24,22 @@ import {
   TableRow,
   Tabs,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import PaymentsIcon from "@mui/icons-material/Payments";
 import AddIcon from "@mui/icons-material/Add";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { Link } from "react-router-dom";
 import { useAccount } from "../../libs/hooks/useAccount";
 import {
   useAdminPayrollSummary,
   useCreatePayrollAdjustment,
+  useDeletePayrollAdjustment,
   useMyPayroll,
+  usePayrollAdjustments,
+  useUpdatePayrollAdjustment,
 } from "../../libs/hooks/usePayroll";
 import { useStaffForAssignment } from "../../libs/hooks/useTask";
 import { useSnackbar } from "../../libs/context/SnackbarContext";
@@ -40,7 +47,10 @@ import { getApiErrorMessage } from "../../libs/utils/apiError";
 import { formatCurrency } from "../../libs/utils/format";
 import { formatVnDate, getCurrentMonth } from "../../libs/utils/scheduleUtils";
 import PageLoader from "../../components/common/PageLoader";
-import type { PayrollAdjustmentType } from "../../libs/types/payroll.type";
+import type {
+  PayrollAdjustment,
+  PayrollAdjustmentType,
+} from "../../libs/types/payroll.type";
 import { getRoleLabel } from "../../libs/utils/roleAccess";
 
 function SummaryCards({
@@ -205,7 +215,14 @@ function PayrollDetail({ month }: { month: string }) {
 
 function AdminSummaryTab({ month }: { month: string }) {
   const { data, isLoading } = useAdminPayrollSummary(month);
+  const { data: adjustments = [], isLoading: adjustmentsLoading } =
+    usePayrollAdjustments(month);
   const [adjustOpen, setAdjustOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<PayrollAdjustment | null>(null);
+  const [editReason, setEditReason] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<PayrollAdjustment | null>(
+    null,
+  );
   const [form, setForm] = useState({
     userId: "",
     type: "BONUS" as PayrollAdjustmentType,
@@ -214,6 +231,8 @@ function AdminSummaryTab({ month }: { month: string }) {
   });
   const { data: staff = [] } = useStaffForAssignment();
   const createAdj = useCreatePayrollAdjustment();
+  const updateAdj = useUpdatePayrollAdjustment();
+  const deleteAdj = useDeletePayrollAdjustment();
   const { showSuccess, showError } = useSnackbar();
 
   const employees = staff.filter((s) => s.role !== "ADMIN");
@@ -230,6 +249,38 @@ function AdminSummaryTab({ month }: { month: string }) {
       showSuccess("Đã ghi nhận thưởng/phạt");
       setAdjustOpen(false);
       setForm({ userId: "", type: "BONUS", amount: "", reason: "" });
+    } catch (e) {
+      showError(getApiErrorMessage(e));
+    }
+  };
+
+  const openEditDialog = (adjustment: PayrollAdjustment) => {
+    setEditTarget(adjustment);
+    setEditReason(adjustment.reason);
+  };
+
+  const handleUpdateReason = async () => {
+    if (!editTarget) return;
+    try {
+      await updateAdj.mutateAsync({
+        id: editTarget.id,
+        payload: { reason: editReason.trim() },
+        month,
+      });
+      showSuccess("Đã cập nhật lý do");
+      setEditTarget(null);
+      setEditReason("");
+    } catch (e) {
+      showError(getApiErrorMessage(e));
+    }
+  };
+
+  const handleDeleteAdjustment = async () => {
+    if (!deleteTarget) return;
+    try {
+      await deleteAdj.mutateAsync({ id: deleteTarget.id, month });
+      showSuccess("Đã xóa khoản thưởng/phạt");
+      setDeleteTarget(null);
     } catch (e) {
       showError(getApiErrorMessage(e));
     }
@@ -294,6 +345,80 @@ function AdminSummaryTab({ month }: { month: string }) {
         </Table>
       </TableContainer>
 
+      <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>
+        Chi tiết thưởng / phạt trong tháng
+      </Typography>
+      <TableContainer component={Paper}>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell>Nhân viên</TableCell>
+              <TableCell>Loại</TableCell>
+              <TableCell align="right">Số tiền</TableCell>
+              <TableCell>Lý do</TableCell>
+              <TableCell>Ngày ghi</TableCell>
+              <TableCell align="center" width={100}>
+                Thao tác
+              </TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {adjustmentsLoading ? (
+              <TableRow>
+                <TableCell colSpan={6} align="center">
+                  Đang tải...
+                </TableCell>
+              </TableRow>
+            ) : adjustments.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} align="center">
+                  Chưa có thưởng/phạt trong tháng này
+                </TableCell>
+              </TableRow>
+            ) : (
+              adjustments.map((a) => (
+                <TableRow key={a.id}>
+                  <TableCell>{a.user?.fullName ?? "—"}</TableCell>
+                  <TableCell>
+                    <Chip
+                      size="small"
+                      label={a.type === "BONUS" ? "Thưởng" : "Phạt"}
+                      color={a.type === "BONUS" ? "success" : "error"}
+                    />
+                  </TableCell>
+                  <TableCell align="right">{formatCurrency(a.amount)}</TableCell>
+                  <TableCell>{a.reason}</TableCell>
+                  <TableCell>
+                    {new Date(a.createdAt).toLocaleDateString("vi-VN")}
+                  </TableCell>
+                  <TableCell align="center">
+                    <Tooltip title="Sửa lý do">
+                      <IconButton
+                        size="small"
+                        onClick={() => openEditDialog(a)}
+                        aria-label="Sửa lý do"
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Xóa">
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => setDeleteTarget(a)}
+                        aria-label="Xóa"
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
       <Dialog open={adjustOpen} onClose={() => setAdjustOpen(false)} fullWidth maxWidth="sm">
         <DialogTitle>Thưởng / Phạt nhân viên</DialogTitle>
         <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
@@ -349,6 +474,67 @@ function AdminSummaryTab({ month }: { month: string }) {
             disabled={createAdj.isPending || !form.userId || !form.reason || !form.amount}
           >
             Lưu
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={!!editTarget}
+        onClose={() => setEditTarget(null)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Sửa lý do thưởng / phạt</DialogTitle>
+        <DialogContent sx={{ pt: 1 }}>
+          {editTarget && (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+              <Typography variant="body2" color="text.secondary">
+                {editTarget.user?.fullName} ·{" "}
+                {editTarget.type === "BONUS" ? "Thưởng" : "Phạt"} ·{" "}
+                {formatCurrency(editTarget.amount)}
+              </Typography>
+              <TextField
+                label="Lý do"
+                multiline
+                minRows={2}
+                value={editReason}
+                onChange={(e) => setEditReason(e.target.value)}
+                autoFocus
+              />
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditTarget(null)}>Hủy</Button>
+          <Button
+            variant="contained"
+            onClick={handleUpdateReason}
+            disabled={updateAdj.isPending || !editReason.trim()}
+          >
+            Lưu
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)}>
+        <DialogTitle>Xác nhận xóa</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Bạn có chắc muốn xóa khoản{" "}
+            {deleteTarget?.type === "BONUS" ? "thưởng" : "phạt"}{" "}
+            {deleteTarget ? formatCurrency(deleteTarget.amount) : ""} của{" "}
+            {deleteTarget?.user?.fullName}?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteTarget(null)}>Hủy</Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={handleDeleteAdjustment}
+            disabled={deleteAdj.isPending}
+          >
+            Xóa
           </Button>
         </DialogActions>
       </Dialog>

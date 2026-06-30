@@ -67,3 +67,7 @@ export type CreatePayrollAdjustmentPayload = {
   reason: string;
   month: string;
 };
+
+export type UpdatePayrollAdjustmentPayload = {
+  reason: string;
+};

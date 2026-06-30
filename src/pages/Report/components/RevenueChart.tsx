@@ -3,6 +3,7 @@ import type { RevenueByDay } from "../../../libs/types/report.type";
 import { formatCurrency } from "../../../libs/utils/format";
 
 const CHART_HEIGHT = 180;
+const BAR_MIN_WIDTH = 30;
 
 type RevenueChartProps = {
   data: RevenueByDay[];
@@ -28,13 +29,23 @@ export default function RevenueChart({ data }: RevenueChartProps) {
       </Typography>
       <Box
         sx={{
-          display: "flex",
-          alignItems: "flex-end",
-          gap: 1,
-          height: CHART_HEIGHT + 48,
+          overflowX: "auto",
+          width: "100%",
           mt: 2,
+          // Giữ nhãn ngày ở 2 đầu không bị cắt khi cuộn hết
+          scrollPaddingInline: 8,
         }}
       >
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "flex-end",
+            gap: 1,
+            height: CHART_HEIGHT + 48,
+            minWidth: "100%",
+            px: 1,
+          }}
+        >
         {data.map((item) => {
           const barHeight =
             maxTotal > 0
@@ -50,7 +61,8 @@ export default function RevenueChart({ data }: RevenueChartProps) {
             <Box
               key={item.date}
               sx={{
-                flex: 1,
+                flex: `1 0 ${BAR_MIN_WIDTH}px`,
+                minWidth: BAR_MIN_WIDTH,
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
@@ -86,10 +98,16 @@ export default function RevenueChart({ data }: RevenueChartProps) {
                   <Box sx={{ height: productHeight, bgcolor: "#f06292" }} />
                 )}
               </Box>
-              <Typography variant="caption">{item.date}</Typography>
+              <Typography
+                variant="caption"
+                sx={{ whiteSpace: "nowrap", fontSize: 11, lineHeight: 1.2 }}
+              >
+                {item.date}
+              </Typography>
             </Box>
           );
         })}
+        </Box>
       </Box>
       <Box sx={{ display: "flex", gap: 3, mt: 2 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
