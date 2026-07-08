@@ -30,6 +30,7 @@ import AddIcon from "@mui/icons-material/Add";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import PersonOffIcon from "@mui/icons-material/PersonOff";
+import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import PhoneIcon from "@mui/icons-material/Phone";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { formatCurrency } from "../../libs/utils/format";
@@ -42,6 +43,8 @@ import {
   useConfirmBooking,
   useCreateBooking,
   useMarkNoShowBooking,
+  useReassignBookingTable,
+  useReassignTableOptions,
 } from "../../libs/hooks/useBooking";
 import { useSnackbar } from "../../libs/context/SnackbarContext";
 import { getApiErrorMessage } from "../../libs/utils/apiError";
@@ -74,6 +77,8 @@ export default function BookingPage() {
     date: today,
   });
   const [openCreate, setOpenCreate] = useState(false);
+  const [reassignBookingId, setReassignBookingId] = useState<string | null>(null);
+  const [reassignTableId, setReassignTableId] = useState("");
   const [form, setForm] = useState({
     customerName: "",
     customerPhone: "",
@@ -92,6 +97,14 @@ export default function BookingPage() {
   const { mutate: confirmBooking } = useConfirmBooking();
   const { mutate: cancelBooking } = useCancelBooking();
   const { mutate: markNoShow } = useMarkNoShowBooking();
+  const { mutate: reassignTable, isPending: isReassigning } =
+    useReassignBookingTable();
+  const {
+    data: reassignOptions,
+    isLoading: isLoadingReassignOptions,
+    isError: isReassignOptionsError,
+    error: reassignOptionsError,
+  } = useReassignTableOptions(reassignBookingId);
 
   const filteredBookings =
     statusFilter === "ALL"
@@ -160,6 +173,42 @@ export default function BookingPage() {
         showSnackbar(getApiErrorMessage(err, "Không thể cập nhật"), "error"),
     });
   };
+
+  const openReassignDialog = (booking: TableBooking) => {
+    setReassignBookingId(booking.id);
+    setReassignTableId("");
+  };
+
+  const closeReassignDialog = () => {
+    setReassignBookingId(null);
+    setReassignTableId("");
+  };
+
+  const handleReassign = () => {
+    if (!reassignBookingId || !reassignTableId) {
+      showSnackbar("Vui lòng chọn bàn mới", "warning");
+      return;
+    }
+
+    reassignTable(
+      { bookingId: reassignBookingId, tableId: reassignTableId },
+      {
+        onSuccess: (updated) => {
+          showSnackbar(
+            `Đã chuyển ${updated.bookingCode} sang ${updated.tableName}`,
+            "success",
+          );
+          closeReassignDialog();
+        },
+        onError: (err) =>
+          showSnackbar(getApiErrorMessage(err, "Không thể đổi bàn"), "error"),
+      },
+    );
+  };
+
+  const canReassign = (booking: TableBooking) =>
+    (booking.status === "PENDING" || booking.status === "CONFIRMED") &&
+    !booking.hasCheckedIn;
 
   if (isLoading) {
     return <PageLoader color="#9c27b0" />;
@@ -385,6 +434,16 @@ export default function BookingPage() {
                               >
                                 <CheckCircleIcon fontSize="small" />
                               </IconButton>
+                              {canReassign(booking) && (
+                                <IconButton
+                                  size="small"
+                                  color="primary"
+                                  title="Đổi bàn"
+                                  onClick={() => openReassignDialog(booking)}
+                                >
+                                  <SwapHorizIcon fontSize="small" />
+                                </IconButton>
+                              )}
                               <IconButton
                                 size="small"
                                 color="error"
@@ -413,6 +472,14 @@ export default function BookingPage() {
                                   gap: 0.5,
                                 }}
                               >
+                                <IconButton
+                                  size="small"
+                                  color="primary"
+                                  title="Đổi bàn"
+                                  onClick={() => openReassignDialog(booking)}
+                                >
+                                  <SwapHorizIcon fontSize="small" />
+                                </IconButton>
                                 <IconButton
                                   size="small"
                                   color="warning"
@@ -592,6 +659,88 @@ export default function BookingPage() {
             disabled={isCreating}
           >
             {isCreating ? "Đang tạo..." : "Tạo đặt bàn"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={!!reassignBookingId}
+        onClose={closeReassignDialog}
+        maxWidth="sm"
+        fullWidth
+        disableScrollLock
+      >
+        <DialogTitle>Đổi bàn đặt</DialogTitle>
+        <DialogContent dividers sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+          {isLoadingReassignOptions && (
+            <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
+              <CircularProgress size={28} />
+            </Box>
+          )}
+
+          {isReassignOptionsError && (
+            <Alert severity="error">
+              {getApiErrorMessage(reassignOptionsError, "Không thể tải danh sách bàn")}
+            </Alert>
+          )}
+
+          {reassignOptions && (
+            <>
+              {reassignOptions.currentTableOccupied && (
+                <Alert severity="warning">
+                  {reassignOptions.currentTable.tableName} đang có khách chơi (walk-in).
+                  Hãy chuyển lịch đặt sang bàn trống khác để khách đặt bàn không bị miss lịch.
+                </Alert>
+              )}
+
+              <Box>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Mã đặt: <strong>{reassignOptions.bookingCode}</strong>
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Bàn hiện tại: <strong>{reassignOptions.currentTable.tableName}</strong>
+                </Typography>
+              </Box>
+
+              {reassignOptions.eligibleTables.length === 0 ? (
+                <Alert severity="info">
+                  Không có bàn trống khung giờ này. Vui lòng hủy hoặc liên hệ khách để đổi giờ.
+                </Alert>
+              ) : (
+                <FormControl fullWidth size="small">
+                  <InputLabel>Chọn bàn mới</InputLabel>
+                  <Select
+                    label="Chọn bàn mới"
+                    value={reassignTableId}
+                    onChange={(e) => setReassignTableId(e.target.value)}
+                    MenuProps={{ disableScrollLock: true }}
+                  >
+                    {reassignOptions.eligibleTables.map((table) => (
+                      <MenuItem key={table.id} value={table.id}>
+                        {table.tableName} — {formatCurrency(table.hourlyRate)}/h
+                        {table.isOccupied ? " (đang có khách)" : ""}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeReassignDialog}>Hủy</Button>
+          <Button
+            variant="contained"
+            sx={{ bgcolor: "#9c27b0" }}
+            onClick={handleReassign}
+            disabled={
+              isReassigning ||
+              isLoadingReassignOptions ||
+              !reassignTableId ||
+              !reassignOptions?.eligibleTables.length
+            }
+          >
+            {isReassigning ? "Đang đổi..." : "Xác nhận đổi bàn"}
           </Button>
         </DialogActions>
       </Dialog>

@@ -81,7 +81,7 @@ export default function StorePage() {
       try {
         const booking = await getConfirmedBookingForTable(table.id);
         if (!booking) {
-          showError("Không tìm thấy đặt bàn đã xác nhận cho bàn này.");
+          showError("Check-in bàn đặt sớm tối đa 15 phút.");
           return;
         }
 

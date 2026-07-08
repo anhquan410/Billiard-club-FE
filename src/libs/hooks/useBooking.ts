@@ -7,7 +7,9 @@ import {
   getBookingDashboard,
   getConfirmedBookingForTable,
   getMyBookings,
+  getReassignTableOptions,
   markNoShowBooking,
+  reassignBookingTable,
   type BookingQueryParams,
   type CreateBookingPayload,
   type CustomerCreateBookingPayload,
@@ -78,6 +80,32 @@ export const useMarkNoShowBooking = () => {
       queryClient.invalidateQueries({ queryKey: BOOKING_QUERY_KEY.all });
       queryClient.invalidateQueries({ queryKey: ["tables"] });
     },
+  });
+};
+
+export const useReassignBookingTable = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      bookingId,
+      tableId,
+    }: {
+      bookingId: string;
+      tableId: string;
+    }) => reassignBookingTable(bookingId, tableId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: BOOKING_QUERY_KEY.all });
+      queryClient.invalidateQueries({ queryKey: ["tables"] });
+    },
+  });
+};
+
+export const useReassignTableOptions = (bookingId: string | null) => {
+  return useQuery({
+    queryKey: [...BOOKING_QUERY_KEY.all, "reassign-options", bookingId],
+    queryFn: () => getReassignTableOptions(bookingId!),
+    enabled: !!bookingId,
   });
 };
 

@@ -88,3 +88,38 @@ export async function markNoShowBooking(id: string) {
   const response = await agent.patch<TableBooking>(`/bookings/${id}/no-show`);
   return response.data;
 }
+
+export type ReassignTableOption = {
+  id: string;
+  tableName: string;
+  status: string;
+  hourlyRate: number;
+  isOccupied: boolean;
+};
+
+export type ReassignTableOptionsData = {
+  bookingId: string;
+  bookingCode: string;
+  currentTable: {
+    id: string;
+    tableName: string;
+    status: string;
+  };
+  currentTableOccupied: boolean;
+  eligibleTables: ReassignTableOption[];
+};
+
+export async function getReassignTableOptions(bookingId: string) {
+  const response = await agent.get<ReassignTableOptionsData>(
+    `/bookings/${bookingId}/reassign-options`,
+  );
+  return response.data;
+}
+
+export async function reassignBookingTable(bookingId: string, tableId: string) {
+  const response = await agent.patch<TableBooking>(
+    `/bookings/${bookingId}/reassign-table`,
+    { tableId },
+  );
+  return response.data;
+}
