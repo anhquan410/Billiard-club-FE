@@ -15,14 +15,12 @@ import {
   MenuItem,
   Paper,
   Select,
-  Tab,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Tabs,
   TextField,
   Tooltip,
   Typography,
@@ -591,7 +589,6 @@ export default function SalaryPage() {
   const isAdmin = user?.role === "ADMIN";
   const isEmployee = user?.role === "STAFF" || user?.role === "CASHIER";
   const [month, setMonth] = useState(getCurrentMonth());
-  const [tab, setTab] = useState(0);
 
   return (
     <Box sx={{ p: { xs: 1, md: 3 } }}>
@@ -612,17 +609,7 @@ export default function SalaryPage() {
       />
 
       {isAdmin ? (
-        <>
-          <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
-            <Tab label="Tổng hợp" />
-            <Tab label="Lương của tôi" />
-          </Tabs>
-          {tab === 0 ? (
-            <AdminSummaryTab month={month} />
-          ) : (
-            <PayrollDetail month={month} />
-          )}
-        </>
+        <AdminSummaryTab month={month} />
       ) : isEmployee ? (
         <PayrollDetail month={month} />
       ) : (
