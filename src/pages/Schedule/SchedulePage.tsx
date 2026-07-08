@@ -493,7 +493,7 @@ function AdminManageTab() {
           <ChevronLeftIcon />
         </IconButton>
         <Typography>
-          Tuần <strong>{formatVnDate(weekStart)}</strong>
+          Tuần <strong>{formatVnDate(weekStart)}</strong> - <strong>{formatVnDate(addDays(weekStart, 6))}</strong>
         </Typography>
         <IconButton onClick={() => setWeekStart(addDays(weekStart, 7))}>
           <ChevronRightIcon />
