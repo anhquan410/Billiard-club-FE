@@ -9,7 +9,6 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  FormControlLabel,
   IconButton,
   Paper,
   Tab,
@@ -37,7 +36,6 @@ import {
   useApproveSchedule,
   useMySchedule,
   usePendingSchedules,
-  useRegistrationWindow,
   useRejectSchedule,
   useSaveMySchedule,
   useScheduleOverview,
@@ -51,8 +49,10 @@ import {
   addDays,
   DAY_LABELS,
   formatVnDate,
+  getNextWeekStart,
   getWeekDates,
   getWeekStart,
+  isFutureWeekStart,
   SHIFT_LABELS,
   SHIFT_TYPES,
 } from "../../libs/utils/scheduleUtils";
@@ -77,54 +77,77 @@ type ShiftGridProps = {
   selected: Set<string>;
   onToggle: (workDate: string, shiftType: ShiftType) => void;
   readOnly?: boolean;
+  embedded?: boolean;
 };
 
 function shiftKey(workDate: string, shiftType: ShiftType) {
   return `${workDate}:${shiftType}`;
 }
 
-function ShiftGrid({ weekStart, selected, onToggle, readOnly }: ShiftGridProps) {
+function ShiftGrid({ weekStart, selected, onToggle, readOnly, embedded }: ShiftGridProps) {
   const weekDates = getWeekDates(weekStart);
+
+  const table = (
+    <Table size="small">
+      <TableHead>
+        <TableRow>
+          <TableCell>Ca / Ngày</TableCell>
+          {weekDates.map((date, i) => (
+            <TableCell key={date} align="center" sx={{ minWidth: embedded ? 88 : undefined, px: embedded ? 0.5 : 2 }}>
+              <Typography variant="caption" display="block" noWrap>
+                {DAY_LABELS[i]}
+              </Typography>
+              <Typography variant="body2" noWrap>
+                {formatVnDate(date)}
+              </Typography>
+            </TableCell>
+          ))}
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {SHIFT_TYPES.map((shiftType) => (
+          <TableRow key={shiftType}>
+            <TableCell sx={{ minWidth: 140 }}>
+              <Typography variant="body2">{SHIFT_LABELS[shiftType]}</Typography>
+            </TableCell>
+            {weekDates.map((date) => {
+              const key = shiftKey(date, shiftType);
+              const checked = selected.has(key);
+              return (
+                <TableCell key={key} align="center" padding="checkbox">
+                  <Checkbox
+                    checked={checked}
+                    disabled={readOnly}
+                    onChange={() => onToggle(date, shiftType)}
+                  />
+                </TableCell>
+              );
+            })}
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+
+  if (embedded) {
+    return (
+      <TableContainer
+        sx={{
+          border: 1,
+          borderColor: "divider",
+          borderRadius: 1,
+          width: "100%",
+          mt: 1,
+        }}
+      >
+        {table}
+      </TableContainer>
+    );
+  }
 
   return (
     <TableContainer component={Paper} sx={{ mt: 2 }}>
-      <Table size="small">
-        <TableHead>
-          <TableRow>
-            <TableCell>Ca / Ngày</TableCell>
-            {weekDates.map((date, i) => (
-              <TableCell key={date} align="center">
-                <Typography variant="caption" display="block">
-                  {DAY_LABELS[i]}
-                </Typography>
-                <Typography variant="body2">{formatVnDate(date)}</Typography>
-              </TableCell>
-            ))}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {SHIFT_TYPES.map((shiftType) => (
-            <TableRow key={shiftType}>
-              <TableCell sx={{ minWidth: 140 }}>
-                <Typography variant="body2">{SHIFT_LABELS[shiftType]}</Typography>
-              </TableCell>
-              {weekDates.map((date) => {
-                const key = shiftKey(date, shiftType);
-                const checked = selected.has(key);
-                return (
-                  <TableCell key={key} align="center" padding="checkbox">
-                    <Checkbox
-                      checked={checked}
-                      disabled={readOnly}
-                      onChange={() => onToggle(date, shiftType)}
-                    />
-                  </TableCell>
-                );
-              })}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      {table}
     </TableContainer>
   );
 }
@@ -141,17 +164,10 @@ function shiftsToSelected(shifts: { workDate: string; shiftType: ShiftType }[]) 
 }
 
 function EmployeeScheduleTab() {
-  const { data: registrationWindow } = useRegistrationWindow();
   const [navigatedWeekStart, setNavigatedWeekStart] = useState<string | null>(null);
   const [editedSelected, setEditedSelected] = useState<Set<string> | null>(null);
 
-  const registrationWeekStart =
-    registrationWindow?.isOpen && registrationWindow.weekStart
-      ? registrationWindow.weekStart
-      : null;
-
-  const weekStart =
-    navigatedWeekStart ?? registrationWeekStart ?? getWeekStart();
+  const weekStart = navigatedWeekStart ?? getNextWeekStart();
 
   const { data: schedule, isLoading } = useMySchedule(weekStart);
   const saveMutation = useSaveMySchedule();
@@ -169,8 +185,7 @@ function EmployeeScheduleTab() {
   };
 
   const canEdit =
-    registrationWindow?.isOpen &&
-    registrationWindow.weekStart === weekStart &&
+    isFutureWeekStart(weekStart) &&
     schedule &&
     (schedule.status === "DRAFT" || schedule.status === "REJECTED");
 
@@ -215,18 +230,16 @@ function EmployeeScheduleTab() {
 
   return (
     <Box>
-      {registrationWindow && (
-        <Alert severity={registrationWindow.isOpen ? "info" : "warning"} sx={{ mb: 2 }}>
-          {registrationWindow.message}
-        </Alert>
-      )}
+      <Alert severity="info" sx={{ mb: 2 }}>
+        Bạn chỉ có thể đăng ký lịch cho các tuần trong tương lai.
+      </Alert>
 
       <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
         <IconButton onClick={() => changeWeek(addDays(weekStart, -7))}>
           <ChevronLeftIcon />
         </IconButton>
         <Typography>
-          Tuần bắt đầu <strong>{formatVnDate(weekStart)}</strong>
+          Tuần <strong>{formatVnDate(weekStart)}</strong> - <strong>{formatVnDate(addDays(weekStart, 6))}</strong>
         </Typography>
         <IconButton onClick={() => changeWeek(addDays(weekStart, 7))}>
           <ChevronRightIcon />
@@ -317,23 +330,49 @@ function AdminPendingTab() {
   }
 
   return (
-    <Box>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       {pending.map((item) => (
-        <Paper key={item.id} sx={{ p: 2, mb: 2 }}>
-          <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+        <Paper key={item.id} variant="outlined" sx={{ overflow: "hidden" }}>
+          <Box
+            sx={{
+              px: 2,
+              py: 1.5,
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 1,
+              bgcolor: "grey.50",
+              borderBottom: 1,
+              borderColor: "divider",
+            }}
+          >
             <Box>
-              <Typography fontWeight={600}>{item.user?.fullName}</Typography>
-              <Typography variant="body2" color="text.secondary">
-                Tuần {formatVnDate(item.weekStart)} · {item.shifts.length} ca
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+                <Typography fontWeight={700}>{item.user?.fullName}</Typography>
+                {item.user?.role && (
+                  <Chip
+                    size="small"
+                    label={getRoleLabel(item.user.role)}
+                    variant="outlined"
+                  />
+                )}
+                <Chip size="small" label="Chờ duyệt" color="warning" />
+              </Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                Tuần bắt đầu {formatVnDate(item.weekStart)} · {item.shifts.length} ca
+                {item.submittedAt &&
+                  ` · Gửi lúc ${new Date(item.submittedAt).toLocaleString("vi-VN")}`}
               </Typography>
             </Box>
-            <Box sx={{ display: "flex", gap: 1 }}>
+            <Box sx={{ display: "flex", gap: 1, flexShrink: 0 }}>
               <Button
                 size="small"
                 variant="contained"
                 color="success"
                 startIcon={<CheckIcon />}
                 onClick={() => handleApprove(item.id)}
+                disabled={approveMutation.isPending}
               >
                 Duyệt
               </Button>
@@ -343,20 +382,26 @@ function AdminPendingTab() {
                 color="error"
                 startIcon={<CloseIcon />}
                 onClick={() => setRejectId(item.id)}
+                disabled={rejectMutation.isPending}
               >
                 Từ chối
               </Button>
             </Box>
           </Box>
-          <Typography variant="body2">
-            {item.shifts
-              .map((s) => `${formatVnDate(s.workDate)} – ${SHIFT_LABELS[s.shiftType]}`)
-              .join(" · ")}
-          </Typography>
+
+          <Box sx={{ p: 2 }}>
+            <ShiftGrid
+              weekStart={item.weekStart}
+              selected={shiftsToSelected(item.shifts)}
+              onToggle={() => {}}
+              readOnly
+              embedded
+            />
+          </Box>
         </Paper>
       ))}
 
-      <Dialog open={!!rejectId} onClose={() => setRejectId(null)}>
+      <Dialog open={!!rejectId} onClose={() => setRejectId(null)} fullWidth maxWidth="sm">
         <DialogTitle>Từ chối lịch làm việc</DialogTitle>
         <DialogContent>
           <TextField
@@ -371,7 +416,12 @@ function AdminPendingTab() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setRejectId(null)}>Hủy</Button>
-          <Button variant="contained" color="error" onClick={handleReject}>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleReject}
+            disabled={!rejectReason.trim() || rejectMutation.isPending}
+          >
             Xác nhận
           </Button>
         </DialogActions>
@@ -390,7 +440,6 @@ function AdminManageTab() {
   const [editUserId, setEditUserId] = useState<string | null>(null);
   const [editUserName, setEditUserName] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [approveOnSave, setApproveOnSave] = useState(true);
 
   const openEdit = (
     userId: string,
@@ -400,7 +449,6 @@ function AdminManageTab() {
     setEditUserId(userId);
     setEditUserName(fullName);
     setSelected(shiftsToSelected(shifts));
-    setApproveOnSave(true);
   };
 
   const handleSave = async () => {
@@ -411,10 +459,10 @@ function AdminManageTab() {
         payload: {
           weekStart,
           shifts: selectedToShifts(selected),
-          approve: approveOnSave,
+          approve: true,
         },
       });
-      showSuccess(approveOnSave ? "Đã lưu và duyệt lịch" : "Đã lưu lịch");
+      showSuccess("Đã lưu và duyệt lịch");
       setEditUserId(null);
     } catch (e) {
       showError(getApiErrorMessage(e));
@@ -510,23 +558,16 @@ function AdminManageTab() {
       <Dialog
         open={!!editUserId}
         onClose={() => setEditUserId(null)}
-        maxWidth="md"
+        maxWidth="lg"
         fullWidth
+        PaperProps={{ sx: { width: "min(1100px, 96vw)" } }}
       >
         <DialogTitle>Lịch làm việc — {editUserName}</DialogTitle>
-        <DialogContent>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={approveOnSave}
-                onChange={(e) => setApproveOnSave(e.target.checked)}
-              />
-            }
-            label="Duyệt luôn sau khi lưu (dùng khi NV bỏ lỡ Chủ nhật)"
-          />
+        <DialogContent sx={{ pt: 1 }}>
           <ShiftGrid
             weekStart={weekStart}
             selected={selected}
+            embedded
             onToggle={(date, type) => {
               setSelected((prev) => {
                 const next = new Set(prev);
@@ -541,7 +582,7 @@ function AdminManageTab() {
         <DialogActions>
           <Button onClick={() => setEditUserId(null)}>Hủy</Button>
           <Button variant="contained" onClick={handleSave} disabled={adminSave.isPending}>
-            Lưu
+            Lưu và duyệt
           </Button>
         </DialogActions>
       </Dialog>

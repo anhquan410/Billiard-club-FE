@@ -53,6 +53,18 @@ export function getNextWeekStart(from: Date = new Date()): string {
   return current.toISOString().slice(0, 10);
 }
 
+/** Earliest weekStart employees may register for */
+export function getMinEditableWeekStart(from: Date = new Date()): string {
+  return getNextWeekStart(from);
+}
+
+export function isFutureWeekStart(
+  weekStart: string,
+  from: Date = new Date(),
+): boolean {
+  return weekStart >= getMinEditableWeekStart(from);
+}
+
 export function addDays(dateStr: string, days: number): string {
   const d = parseDateOnly(dateStr);
   d.setUTCDate(d.getUTCDate() + days);
