@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import {
+  Avatar,
   Box,
   Paper,
   Typography,
@@ -11,6 +12,7 @@ import {
   Tab,
   InputAdornment,
   Chip,
+  Divider,
   Table,
   TableHead,
   TableBody,
@@ -28,8 +30,10 @@ import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 import PrintIcon from "@mui/icons-material/Print";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import CloseIcon from "@mui/icons-material/Close";
 import { useProduct } from "../../../libs/hooks/useProduct";
 import type { ProductItem } from "../../../libs/types/warehouse.type";
 import { useParams } from "react-router-dom";
@@ -45,6 +49,17 @@ import {
   STORE_PRODUCT_CATEGORIES,
 } from "../../../libs/utils/productCategories";
 import type { ProductCategory } from "../../../libs/types/warehouse.type";
+import { getTierLabel } from "../../../libs/utils/bonusLabels";
+
+function getCustomerInitials(fullName: string) {
+  return fullName
+    .split(" ")
+    .filter(Boolean)
+    .slice(-2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+}
 
 const quantityFieldSx = {
   width: 88,
@@ -245,74 +260,179 @@ export default function TableDetailPage() {
   return (
     <>
       <Box sx={{ p: 2 }}>
-        <Typography variant="h6" sx={{ mb: 1 }}>
+        <Typography variant="h6" sx={{ mb: 2 }}>
           {table?.tableName}
         </Typography>
-        {sessionData?.session?.booking && (
-          <Chip
-            size="small"
-            color="secondary"
-            sx={{ mb: 1, mr: 1 }}
-            label={`Check-in đặt bàn ${sessionData.session.booking.bookingCode} — ${sessionData.session.booking.customerName} (${sessionData.session.booking.startTime}–${sessionData.session.booking.endTime})`}
-          />
-        )}
-        {sessionData?.session?.customer && (
-          <Chip
-            size="small"
-            color="primary"
-            sx={{ mb: 1 }}
-            label={`KH: ${sessionData.session.customer.fullName} · ${sessionData.session.customer.phone}`}
-            onDelete={
-              isAssigningCustomer
-                ? undefined
-                : () => {
-                    if (!sessionData?.session?.id || !id) return;
-                    assignCustomer(
-                      {
-                        tableId: id,
-                        sessionId: sessionData.session.id,
-                        customerId: null,
-                      },
-                      {
-                        onSuccess: () => showSuccess("Đã bỏ gán khách"),
-                        onError: () => showError("Không thể bỏ gán khách"),
-                      },
-                    );
-                  }
-            }
-          />
-        )}
         <Box sx={{ display: "flex", gap: 2 }}>
           {/* Left: Order detail */}
           <Box sx={{ flex: 2, minWidth: 580 }}>
             <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  flexWrap: "wrap",
-                  gap: 1,
-                  mb: 1.5,
-                }}
-              >
-                <Button
-                  startIcon={<SearchIcon />}
-                  onClick={() => setOpenFindCustomer(true)}
-                  disabled={!sessionData?.session}
+              <Box sx={{ mb: 2 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    mb: 1.5,
+                  }}
                 >
-                  Tìm khách
-                </Button>
-                <Button
-                  startIcon={<PersonAddIcon />}
-                  onClick={() => setOpenAddCustomer(true)}
-                  disabled={!sessionData?.session}
+                  <PersonOutlineIcon color="primary" fontSize="small" />
+                  <Typography variant="subtitle2" fontWeight={600}>
+                    Khách hàng
+                  </Typography>
+                </Box>
+
+                {sessionData?.session?.booking && (
+                  <Chip
+                    size="small"
+                    color="secondary"
+                    variant="outlined"
+                    sx={{ mb: 1.5, maxWidth: "100%", height: "auto", "& .MuiChip-label": { whiteSpace: "normal", py: 0.5 } }}
+                    label={`Đặt bàn ${sessionData.session.booking.bookingCode} · ${sessionData.session.booking.customerName} (${sessionData.session.booking.startTime}–${sessionData.session.booking.endTime})`}
+                  />
+                )}
+
+                {sessionData?.session?.customer ? (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1.5,
+                      p: 1.5,
+                      bgcolor: "#f8f8f8",
+                      borderRadius: 1.5,
+                      // border: "1px solid",
+                      borderColor: "divider",
+                      mb: 1.5,
+                    }}
+                  >
+                    <Avatar
+                      sx={{
+                        width: 44,
+                        height: 44,
+                        bgcolor: "primary.main",
+                        fontSize: 15,
+                        fontWeight: 600,
+                      }}
+                    >
+                      {getCustomerInitials(
+                        sessionData.session.customer.fullName,
+                      )}
+                    </Avatar>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography fontWeight={600} noWrap>
+                        {sessionData.session.customer.fullName}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {sessionData.session.customer.phone}
+                      </Typography>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: 1.5,
+                          mt: 0.75,
+                        }}
+                      >
+                        <Chip
+                          size="small"
+                          variant="outlined"
+                          label={`Hạng ${getTierLabel(sessionData.session.customer.membershipTier)}`}
+                        />
+                        <Chip
+                          size="small"
+                          color="secondary"
+                          label={`${sessionData.session.customer.bonusPoints} điểm`}
+                        />
+                      </Box>
+                    </Box>
+                    <IconButton
+                      size="small"
+                      disabled={isAssigningCustomer}
+                      onClick={() => {
+                        if (!sessionData?.session?.id || !id) return;
+                        assignCustomer(
+                          {
+                            tableId: id,
+                            sessionId: sessionData.session.id,
+                            customerId: null,
+                          },
+                          {
+                            onSuccess: () => showSuccess("Đã bỏ gán khách"),
+                            onError: () => showError("Không thể bỏ gán khách"),
+                          },
+                        );
+                      }}
+                      sx={{
+                        bgcolor: "background.paper",
+                        border: "1px solid",
+                        borderColor: "divider",
+                        "&:hover": { bgcolor: "error.light", color: "error.contrastText" },
+                      }}
+                    >
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+                ) : (
+                  <Box
+                    sx={{
+                      p: 2,
+                      mb: 1.5,
+                      textAlign: "center",
+                      borderRadius: 1.5,
+                      border: "1px dashed",
+                      borderColor: "divider",
+                      bgcolor: "#fafafa",
+                    }}
+                  >
+                    <Typography variant="body2" color="text.secondary">
+                      Chưa gán khách hàng
+                    </Typography>
+                    <Typography variant="caption" color="text.disabled">
+                      Tìm hoặc thêm khách để tích điểm thưởng
+                    </Typography>
+                  </Box>
+                )}
+
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 1,
+                    alignItems: "center",
+                  }}
                 >
-                  Thêm khách mới
-                </Button>
-                <Button>
-                  Ghi chú <EditIcon sx={{ fontSize: 16, ml: 0.5 }} />
-                </Button>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<SearchIcon />}
+                    onClick={() => setOpenFindCustomer(true)}
+                    disabled={!sessionData?.session}
+                  >
+                    Tìm khách
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<PersonAddIcon />}
+                    onClick={() => setOpenAddCustomer(true)}
+                    disabled={!sessionData?.session}
+                  >
+                    Thêm khách mới
+                  </Button>
+                  <Button
+                    variant="text"
+                    size="small"
+                    startIcon={<EditIcon />}
+                    sx={{ ml: { sm: "auto" } }}
+                  >
+                    Ghi chú
+                  </Button>
+                </Box>
               </Box>
+
+              <Divider sx={{ mb: 2 }} />
+
               {/* Order Table */}
               <Box sx={{ bgcolor: "#f8f8f8", borderRadius: 1, py: 1, mb: 1.5 }}>
                 <Typography fontWeight={500} sx={{ px: 2, py: 0.8, pb: 3 }}>
