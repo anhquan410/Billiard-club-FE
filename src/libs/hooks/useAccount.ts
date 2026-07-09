@@ -2,6 +2,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import agent from "../api/agent";
 import type { User } from "../types";
 import { useNavigate } from "react-router-dom";
+import {
+  clearAuthTokens,
+  hasAccessToken,
+  setAuthTokens,
+} from "../utils/authTokens";
 
 export const ACCOUNT_QUERY_KEY = {
   all: ["account"],
@@ -18,9 +23,8 @@ export const useAccount = () => {
       password: string;
     }) => {
       const response = await agent.post("auth/login", credentials);
-      // Lưu access_token vào localStorage
       if (response.data?.access_token) {
-        localStorage.setItem("access_token", response.data.access_token);
+        setAuthTokens(response.data.access_token, response.data.refresh_token);
       }
       return response.data;
     },
@@ -45,8 +49,8 @@ export const useAccount = () => {
       const response = await agent.post("/auth/logout");
       return response.data;
     },
-    onSuccess: async () => {
-      localStorage.removeItem("access_token");
+    onSettled: () => {
+      clearAuthTokens();
       queryClient.removeQueries({ queryKey: ACCOUNT_QUERY_KEY.user() });
       navigate("/");
     },
@@ -58,7 +62,7 @@ export const useAccount = () => {
       const response = await agent.get<User>("/auth/profile");
       return response.data;
     },
-    // enabled: !!queryClient.getQueryData(["user"]),
+    enabled: hasAccessToken(),
   });
 
   return { loginUser, registerUser, logoutUser, user, isLoadingUser };

@@ -1,4 +1,10 @@
-import axios from "axios";
+import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
+import {
+  clearAuthTokens,
+  getAccessToken,
+  getRefreshToken,
+  setAuthTokens,
+} from "../utils/authTokens";
 
 const sleep = (delay: number) => {
   return new Promise((resolve) => {
@@ -6,17 +12,59 @@ const sleep = (delay: number) => {
   });
 };
 
+type RetryableRequestConfig = InternalAxiosRequestConfig & {
+  _retry?: boolean;
+};
+
 const agent = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   withCredentials: true,
 });
 
-// Thêm interceptor để tự động gửi access_token nếu có
+let isRefreshing = false;
+let refreshPromise: Promise<string> | null = null;
+
+const AUTH_SKIP_REFRESH_PATHS = ["/auth/login", "/auth/refresh-token"];
+
+function shouldSkipRefresh(url?: string) {
+  if (!url) return false;
+  return AUTH_SKIP_REFRESH_PATHS.some((path) => url.includes(path));
+}
+
+async function refreshAccessToken(): Promise<string> {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) {
+    throw new Error("No refresh token");
+  }
+
+  const response = await axios.post(
+    `${import.meta.env.VITE_API_URL}/auth/refresh-token`,
+    { refresh_token: refreshToken },
+  );
+
+  const newAccessToken = response.data?.access_token;
+  const newRefreshToken = response.data?.refresh_token;
+
+  if (!newAccessToken) {
+    throw new Error("Refresh token response missing access_token");
+  }
+
+  setAuthTokens(newAccessToken, newRefreshToken);
+  return newAccessToken;
+}
+
+function redirectToLogin() {
+  clearAuthTokens();
+  if (window.location.pathname !== "/auth/login") {
+    window.location.href = "/auth/login";
+  }
+}
+
 agent.interceptors.request.use((config) => {
-  const token = localStorage.getItem("access_token");
+  const token = getAccessToken();
   if (token) {
     config.headers = config.headers || {};
-    config.headers["Authorization"] = `Bearer ${token}`;
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
@@ -26,32 +74,42 @@ agent.interceptors.response.use(
     await sleep(1000);
     return response;
   },
-  async (error) => {
-    // Nếu lỗi 401 Unauthorized (access token hết hạn)
-    // if (error.response?.status === 401) {
-    //   try {
-    //     // Gọi API refresh để xin access token mới
-    //     const res = await axios.post(
-    //       `${import.meta.env.VITE_API_URL}/auth/refresh`,
-    //       {}, // hoặc truyền thêm dữ liệu nếu backend yêu cầu
-    //       { withCredentials: true },
-    //     );
-    //     const newToken = res.data.access_token;
-    //     // Lưu token mới vào localStorage
-    //     localStorage.setItem("access_token", newToken);
+  async (error: AxiosError) => {
+    const originalRequest = error.config as RetryableRequestConfig | undefined;
 
-    //     // Đặt lại header và retry request với access token mới
-    //     error.config.headers["Authorization"] = `Bearer ${newToken}`;
-    //     return agent(error.config);
-    //   } catch (refreshError) {
-    //     // Nếu refresh cũng lỗi (refresh token hết hạn/hết phiên)
-    //     localStorage.removeItem("access_token");
-    //     // Đẩy user về trang login (xóa state, reset app)
-    //     window.location.href = "/auth/login";
-    //     return Promise.reject(refreshError);
-    //   }
-    // }
-    return Promise.reject(error);
+    if (
+      error.response?.status !== 401 ||
+      !originalRequest ||
+      originalRequest._retry ||
+      shouldSkipRefresh(originalRequest.url)
+    ) {
+      return Promise.reject(error);
+    }
+
+    if (!getRefreshToken()) {
+      redirectToLogin();
+      return Promise.reject(error);
+    }
+
+    originalRequest._retry = true;
+
+    try {
+      if (!isRefreshing) {
+        isRefreshing = true;
+        refreshPromise = refreshAccessToken().finally(() => {
+          isRefreshing = false;
+          refreshPromise = null;
+        });
+      }
+
+      const newAccessToken = await refreshPromise;
+      originalRequest.headers = originalRequest.headers || {};
+      originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+      return agent(originalRequest);
+    } catch (refreshError) {
+      redirectToLogin();
+      return Promise.reject(refreshError);
+    }
   },
 );
 
