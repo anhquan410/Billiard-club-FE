@@ -45,7 +45,7 @@ export default function TableCard({ table, onOpenOrder }: TableCardProps) {
             ? "Trống"
             : table.status === "OCCUPIED"
               ? "Đang sử dụng"
-              : "Bàn đặt"}
+              : `Bàn đặt lúc ${table.upcomingBooking?.startTime}`}
         </Typography>
         {table.status === "AVAILABLE" && table.upcomingBooking && (
           <Typography variant="caption" sx={{ display: "block", mt: 0.5, opacity: 0.95 }}>
