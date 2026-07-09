@@ -40,20 +40,30 @@ export default function InventoryManagementPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const page = Number(searchParams.get("page")) || 1;
   const limit = Number(searchParams.get("limit")) || 10;
+  const category = searchParams.get("category") || "ALL";
+  const [categoryFilter, setCategoryFilter] = useState(category);
 
   // Khi mount lần đầu, nếu chưa có page/limit trên URL thì set mặc định chỉ với page/limit
   React.useEffect(() => {
     if (!searchParams.get("page") || !searchParams.get("limit")) {
+      const params: Record<string, string> = {
+        page: page.toString(),
+        limit: limit.toString(),
+      };
+      if (category !== "ALL") {
+        params.category = category;
+      }
       setSearchParams(
-        { page: page.toString(), limit: limit.toString() },
+        params,
         { replace: true },
       );
     }
     // eslint-disable-next-line
   }, []);
 
-  // Lấy category từ URL nếu có
-  const category = searchParams.get("category") || "ALL";
+  React.useEffect(() => {
+    setCategoryFilter(category);
+  }, [category]);
 
   // Luôn truyền đủ 3 tham số cho useProduct, nếu không có category thì truyền rỗng chuỗi
   const { paginatedProducts, isLoadingProducts } = useProductPagination(
@@ -67,31 +77,43 @@ export default function InventoryManagementPage() {
   }
 
   // Xử lý đổi trang
-  const handlePageChange = (e: React.ChangeEvent<unknown>, value: number) => {
-    setSearchParams({
+  const handlePageChange = (_e: React.ChangeEvent<unknown>, value: number) => {
+    const params: Record<string, string> = {
       page: value.toString(),
       limit: limit.toString(),
-    });
+    };
+    if (category !== "ALL") {
+      params.category = category;
+    }
+    setSearchParams(params);
   };
 
   // Xử lý đổi limit/trang
   const handleLimitChange = (e: any) => {
-    setSearchParams({ page: "1", limit: e.target.value.toString() });
+    const params: Record<string, string> = {
+      page: "1",
+      limit: e.target.value.toString(),
+    };
+    if (category !== "ALL") {
+      params.category = category;
+    }
+    setSearchParams(params);
   };
 
   // Xử lý đổi category
   const handleCategoryChange = (e: any) => {
-    const newCategory = e.target.value;
-    if (newCategory === "ALL") {
-      // Xóa category khỏi URL, chỉ giữ page/limit
-      setSearchParams({ page: "1", limit: limit.toString() });
-    } else {
-      setSearchParams({
-        page: "1",
-        limit: limit.toString(),
-        category: newCategory,
-      });
+    setCategoryFilter(e.target.value);
+  };
+
+  const handleSearch = () => {
+    const params: Record<string, string> = {
+      page: "1",
+      limit: limit.toString(),
+    };
+    if (categoryFilter !== "ALL") {
+      params.category = categoryFilter;
     }
+    setSearchParams(params);
   };
 
   return (
@@ -122,7 +144,7 @@ export default function InventoryManagementPage() {
 
         <FormControl size="small" sx={{ minWidth: 200 }}>
           <Select
-            value={category}
+            value={categoryFilter}
             onChange={handleCategoryChange}
             displayEmpty
             MenuProps={{ disableScrollLock: true }}
@@ -148,6 +170,7 @@ export default function InventoryManagementPage() {
             "&:hover": { bgcolor: "#ec407a" },
             textTransform: "none",
           }}
+          onClick={handleSearch}
         >
           Tìm kiếm
         </Button>
