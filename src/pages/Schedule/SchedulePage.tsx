@@ -30,6 +30,7 @@ import SendIcon from "@mui/icons-material/Send";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { useAccount } from "../../libs/hooks/useAccount";
 import {
   useAdminSaveSchedule,
@@ -541,11 +542,12 @@ function AdminManageTab() {
                   {schedule?.status === "APPROVED" && (
                     <Button
                       size="small"
+                      startIcon={<DeleteIcon />}
                       color="error"
                       onClick={() => handleRejectApproved(schedule.id)}
                       sx={{ ml: 1 }}
                     >
-                      Thu hồi
+                      Xóa
                     </Button>
                   )}
                 </TableCell>

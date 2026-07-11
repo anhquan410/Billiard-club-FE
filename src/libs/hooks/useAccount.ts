@@ -38,8 +38,9 @@ export const useAccount = () => {
       email: string;
       password: string;
       fullName: string;
+      phone?: string;
     }) => {
-      const response = await agent.post("/user", credentials);
+      const response = await agent.post("users/register", credentials);
       return response.data;
     },
   });

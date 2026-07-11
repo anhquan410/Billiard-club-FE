@@ -14,6 +14,16 @@ export type CreateTaskPayload = {
   tags?: string[];
 };
 
+export type UpdateTaskPayload = {
+  title?: string;
+  description?: string;
+  priority?: Task["priority"];
+  assigneeId?: string;
+  dueDate?: string;
+  tags?: string[];
+  status?: TaskStatus;
+};
+
 export async function getTaskDashboard(params: TaskQueryParams = {}) {
   const searchParams = new URLSearchParams();
   if (params.status) searchParams.set("status", params.status);
@@ -32,5 +42,15 @@ export async function createTask(payload: CreateTaskPayload) {
 
 export async function updateTaskStatus(id: string, status: TaskStatus) {
   const response = await agent.patch<Task>(`/tasks/${id}/status`, { status });
+  return response.data;
+}
+
+export async function updateTask(id: string, payload: UpdateTaskPayload) {
+  const response = await agent.patch<Task>(`/tasks/${id}`, payload);
+  return response.data;
+}
+
+export async function deleteTask(id: string) {
+  const response = await agent.delete<{ message: string }>(`/tasks/${id}`);
   return response.data;
 }

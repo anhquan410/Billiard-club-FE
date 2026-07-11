@@ -26,9 +26,16 @@ import { useSearchParams } from "react-router";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import PageLoader from "../../../components/common/PageLoader";
+import type { StockMovementListItem } from "../../../libs/types/warehouse.type";
+
+const formatTableLabel = (table?: StockMovementListItem["table"]) => {
+  if (!table) return "Xuất thủ công";
+  return `B${table.tableNumber} - ${table.tableName}`;
+};
 
 export default function ExportReceipts() {
   const [searchText, setSearchText] = React.useState("");
+  const [appliedSearch, setAppliedSearch] = React.useState("");
   const [branch, setBranch] = React.useState("iBall");
   const [warehouse, setWarehouse] = React.useState("Kho iBall");
   const [status, setStatus] = React.useState("all");
@@ -42,7 +49,7 @@ export default function ExportReceipts() {
   const limit = Number(searchParams.get("limit")) || 10;
 
   const { paginatedStockMovements, isLoadingStockMovements } =
-    useReceiptPagination(page, limit, "EXPORT");
+    useReceiptPagination(page, limit, "EXPORT", appliedSearch);
 
   // Khi mount lần đầu, nếu chưa có page/limit trên URL thì set mặc định chỉ với page/limit
   React.useEffect(() => {
@@ -63,6 +70,14 @@ export default function ExportReceipts() {
   // Format ngày giờ theo định dạng Việt Nam
   const formatVietnameseDateTime = (dateString: string) => {
     return format(new Date(dateString), "dd/MM/yyyy HH:mm:ss", { locale: vi });
+  };
+
+  const handleSearch = () => {
+    setAppliedSearch(searchText.trim());
+    setSearchParams(
+      { page: "1", limit: limit.toString(), type: "EXPORT" },
+      { replace: true },
+    );
   };
 
   // Xử lý đổi trang
@@ -149,9 +164,12 @@ export default function ExportReceipts() {
       >
         <TextField
           size="small"
-          placeholder="Mã phiếu xuất, mã hóa đơn"
+          placeholder="Mã phiếu, mã hóa đơn, tên bàn..."
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleSearch();
+          }}
           sx={{ flexGrow: 1, minWidth: 200 }}
         />
 
@@ -210,6 +228,7 @@ export default function ExportReceipts() {
 
         <Button
           variant="contained"
+          onClick={handleSearch}
           sx={{
             bgcolor: "#f06292",
             "&:hover": { bgcolor: "#ec407a" },
@@ -227,6 +246,8 @@ export default function ExportReceipts() {
             <TableRow>
               <TableCell>STT</TableCell>
               <TableCell>Mã phiếu</TableCell>
+              <TableCell>Mã HĐ</TableCell>
+              <TableCell>Bàn</TableCell>
               <TableCell>Kho xuất</TableCell>
               <TableCell>Ngày tạo</TableCell>
               <TableCell>Sản phẩm </TableCell>
@@ -238,7 +259,7 @@ export default function ExportReceipts() {
           <TableBody>
             {paginatedStockMovements?.stockItems.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={11} align="center" sx={{ py: 8 }}>
+                <TableCell colSpan={10} align="center" sx={{ py: 8 }}>
                   <Box sx={{ textAlign: "center", color: "text.secondary" }}>
                     <Typography variant="h6" sx={{ mb: 1 }}>
                       📦
@@ -249,10 +270,12 @@ export default function ExportReceipts() {
               </TableRow>
             ) : (
               paginatedStockMovements?.stockItems.map(
-                (receipt: any, index: number) => (
+                (receipt: StockMovementListItem, index: number) => (
                   <TableRow key={receipt.id} hover>
                     <TableCell>{index + 1}</TableCell>
                     <TableCell>{receipt.id}</TableCell>
+                    <TableCell>{receipt.order?.orderNumber ?? "—"}</TableCell>
+                    <TableCell>{formatTableLabel(receipt.table ?? undefined)}</TableCell>
                     <TableCell>Iball</TableCell>
                     <TableCell>
                       {formatVietnameseDateTime(receipt.createdAt)}

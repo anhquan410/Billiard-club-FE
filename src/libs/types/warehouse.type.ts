@@ -32,6 +32,25 @@ export type StockMovement = {
   reason?: string;
 };
 
+export type StockMovementListItem = StockMovement & {
+  id: string;
+  beforeStock: number;
+  afterStock: number;
+  createdAt: string;
+  product: ProductItem;
+  user: { fullName: string; email: string };
+  order?: { id: string; orderNumber: string } | null;
+  table?: { id: string; tableNumber: number; tableName: string } | null;
+};
+
+export type StockMovementPaginationResponse = {
+  stockItems: StockMovementListItem[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+};
+
 export type ProductItem = {
   id: string;
   name: string;

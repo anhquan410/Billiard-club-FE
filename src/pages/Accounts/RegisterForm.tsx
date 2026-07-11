@@ -15,17 +15,27 @@ import {
   Person,
   Lock,
   Email,
+  Phone,
 } from "@mui/icons-material";
+import { useNavigate } from "react-router";
+import { useAccount } from "../../libs/hooks/useAccount";
+import { useSnackbar } from "../../libs/context/SnackbarContext";
+import { getApiErrorMessage } from "../../libs/utils/apiError";
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [info, setInfo] = useState({
-    username: "",
+    fullName: "",
     email: "",
     password: "",
     confirm: "",
+    phone: "",
   });
+
+  const { registerUser } = useAccount();
+  const navigate = useNavigate();
+  const { showSuccess, showError } = useSnackbar();
 
   const handleChange = (e: { target: { name: string; value: string } }) => {
     setInfo({ ...info, [e.target.name]: e.target.value });
@@ -34,14 +44,26 @@ export default function RegisterPage() {
   const handleShowPassword = () => setShowPassword((show) => !show);
   const handleShowConfirm = () => setShowConfirm((show) => !show);
 
-  const handleSubmit = (e: { preventDefault: () => void }) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (info.password !== info.confirm) {
-      alert("Mật khẩu xác nhận không khớp!");
+      showError("Mật khẩu không khớp");
       return;
     }
-    // TODO: Add register logic here (call API, etc.)
-    alert("Đăng ký với: " + JSON.stringify(info));
+
+    try {
+      await registerUser.mutateAsync({
+        fullName: info.fullName,
+        email: info.email,
+        password: info.password,
+        phone: info.phone,
+      });
+      showSuccess("Đăng ký thành công!");
+      navigate("/auth/login");
+    } catch (error) {
+      showError(getApiErrorMessage(error, "Đăng ký thất bại!"));
+      console.error("Đăng ký thất bại", error);
+    }
   };
 
   return (
@@ -89,7 +111,7 @@ export default function RegisterPage() {
           <TextField
             required
             fullWidth
-            name="username"
+            name="fullName"
             placeholder="Full Name"
             InputProps={{
               startAdornment: (
@@ -98,7 +120,7 @@ export default function RegisterPage() {
                 </InputAdornment>
               ),
             }}
-            value={info.username}
+            value={info.fullName}
             onChange={handleChange}
             sx={{ background: "#f4f8fd", mb: 2 }}
           />
@@ -120,6 +142,27 @@ export default function RegisterPage() {
               ),
             }}
             value={info.email}
+            onChange={handleChange}
+            sx={{ background: "#f4f8fd", mb: 2 }}
+          />
+
+          <Typography sx={{ mb: 1, color: "#f27ca6", fontSize: 15 }}>
+            * Số điện thoại
+          </Typography>
+          <TextField
+            required
+            fullWidth
+            name="phone"
+            type="phone"
+            placeholder="Số điện thoại"
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Phone color="action" />
+                </InputAdornment>
+              ),
+            }}
+            value={info.phone}
             onChange={handleChange}
             sx={{ background: "#f4f8fd", mb: 2 }}
           />
@@ -184,6 +227,7 @@ export default function RegisterPage() {
             type="submit"
             fullWidth
             variant="contained"
+            disabled={registerUser.isPending}
             sx={{
               background: "linear-gradient(90deg, #f27ca6, #fa9864)",
               mt: 1,

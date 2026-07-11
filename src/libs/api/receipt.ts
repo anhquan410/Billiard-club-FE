@@ -1,4 +1,7 @@
-import type { StockMovement } from "../types/warehouse.type";
+import type {
+  StockMovement,
+  StockMovementPaginationResponse,
+} from "../types/warehouse.type";
 import agent from "./agent";
 
 // get stock-movement items with pagination
@@ -6,10 +9,18 @@ export async function getStockItemsPagination(
   page: number,
   limit: number,
   type?: string,
+  search?: string,
 ) {
   try {
-    const response = await agent.get(
-      `/stocks-movement?page=${page}&limit=${limit}&type=${type || ""}`,
+    const params = new URLSearchParams({
+      page: String(page),
+      limit: String(limit),
+    });
+    if (type) params.set("type", type);
+    if (search?.trim()) params.set("search", search.trim());
+
+    const response = await agent.get<StockMovementPaginationResponse>(
+      `/stocks-movement?${params.toString()}`,
     );
     return response.data;
   } catch (error) {

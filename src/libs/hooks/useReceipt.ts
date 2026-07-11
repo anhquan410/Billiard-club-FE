@@ -8,24 +8,20 @@ import { PRODUCTS_QUERY_KEY } from "./useProduct";
 
 export const RECEIPT_QUERY_KEY = {
   all: ["stock-movements", "all"],
-  pagination: (page?: number, limit?: number, type?: string) => [
-    ...RECEIPT_QUERY_KEY.all,
-    page,
-    limit,
-    type,
-  ],
+  pagination: (page?: number, limit?: number, type?: string, search?: string) =>
+    [...RECEIPT_QUERY_KEY.all, page, limit, type, search] as const,
 } as const;
 
 export const useReceiptPagination = (
   page: number = 1,
   limit: number = 10,
   type?: string,
+  search?: string,
 ) => {
-  // get  stock movements pagination
   const { data: paginatedStockMovements, isLoading: isLoadingStockMovements } =
     useQuery({
-      queryKey: [...RECEIPT_QUERY_KEY.pagination(page, limit, type)],
-      queryFn: () => getStockItemsPagination(page, limit, type),
+      queryKey: [...RECEIPT_QUERY_KEY.pagination(page, limit, type, search)],
+      queryFn: () => getStockItemsPagination(page, limit, type, search),
     });
 
   return { paginatedStockMovements, isLoadingStockMovements };

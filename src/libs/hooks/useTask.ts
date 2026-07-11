@@ -1,10 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createTask,
+  deleteTask,
   getTaskDashboard,
+  updateTask,
   updateTaskStatus,
   type CreateTaskPayload,
   type TaskQueryParams,
+  type UpdateTaskPayload,
 } from "../api/task";
 import { getStaffForAssignment } from "../api/user";
 import type { TaskStatus } from "../types/task.type";
@@ -47,6 +50,29 @@ export const useUpdateTaskStatus = () => {
   return useMutation({
     mutationFn: ({ id, status }: { id: string; status: TaskStatus }) =>
       updateTaskStatus(id, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: TASK_QUERY_KEY.all });
+    },
+  });
+};
+
+export const useUpdateTask = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: UpdateTaskPayload }) =>
+      updateTask(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: TASK_QUERY_KEY.all });
+    },
+  });
+};
+
+export const useDeleteTask = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => deleteTask(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: TASK_QUERY_KEY.all });
     },

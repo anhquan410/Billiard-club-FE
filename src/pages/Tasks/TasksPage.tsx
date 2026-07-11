@@ -8,9 +8,11 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
+  DialogContentText,
   DialogTitle,
   FormControl,
   Grid,
+  IconButton,
   InputLabel,
   MenuItem,
   Paper,
@@ -24,11 +26,14 @@ import {
   TableRow,
   Tabs,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 import {
   getTaskPriorityLabel,
   getTaskStatusLabel,
@@ -37,10 +42,13 @@ import type { Task, TaskStatus } from "../../libs/types/task.type";
 import type { TaskQueryParams } from "../../libs/api/task";
 import {
   useCreateTask,
+  useDeleteTask,
   useStaffForAssignment,
   useTaskDashboard,
+  useUpdateTask,
   useUpdateTaskStatus,
 } from "../../libs/hooks/useTask";
+import { useAccount } from "../../libs/hooks/useAccount";
 import { useSnackbar } from "../../libs/context/SnackbarContext";
 import { getApiErrorMessage } from "../../libs/utils/apiError";
 import PageLoader from "../../components/common/PageLoader";
@@ -69,20 +77,27 @@ const priorityChipColor = (priority: Task["priority"]) => {
   }
 };
 
+const emptyForm = () => ({
+  title: "",
+  description: "",
+  priority: "MEDIUM" as Task["priority"],
+  assigneeId: "",
+  dueDate: new Date().toISOString().slice(0, 10),
+  tags: "",
+  status: "TODO" as TaskStatus,
+});
+
 export default function TasksPage() {
   const { showSnackbar } = useSnackbar();
+  const { user } = useAccount();
+  const isAdmin = user?.role === "ADMIN";
   const { data: staffUsers = [] } = useStaffForAssignment();
   const [activeTab, setActiveTab] = useState(0);
   const [appliedParams, setAppliedParams] = useState<TaskQueryParams>({});
-  const [openCreate, setOpenCreate] = useState(false);
-  const [form, setForm] = useState({
-    title: "",
-    description: "",
-    priority: "MEDIUM" as Task["priority"],
-    assigneeId: "",
-    dueDate: new Date().toISOString().slice(0, 10),
-    tags: "",
-  });
+  const [openForm, setOpenForm] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [form, setForm] = useState(emptyForm());
 
   const tabStatuses: (TaskStatus | "ALL")[] = [
     "ALL",
@@ -95,7 +110,38 @@ export default function TasksPage() {
   const { data, isLoading, isFetching, isError, error, refetch } =
     useTaskDashboard(appliedParams);
   const { mutate: createTask, isPending: isCreating } = useCreateTask();
+  const { mutate: updateTask, isPending: isUpdating } = useUpdateTask();
+  const { mutate: deleteTask, isPending: isDeleting } = useDeleteTask();
   const { mutate: updateStatus } = useUpdateTaskStatus();
+
+  const isSaving = isCreating || isUpdating;
+  const isEditMode = editingTask !== null;
+
+  const handleOpenCreate = () => {
+    setEditingTask(null);
+    setForm(emptyForm());
+    setOpenForm(true);
+  };
+
+  const handleOpenEdit = (task: Task) => {
+    setEditingTask(task);
+    setForm({
+      title: task.title,
+      description: task.description ?? "",
+      priority: task.priority,
+      assigneeId: task.assigneeId,
+      dueDate: task.dueDate,
+      tags: task.tags?.join(", ") ?? "",
+      status: task.status,
+    });
+    setOpenForm(true);
+  };
+
+  const handleCloseForm = () => {
+    setOpenForm(false);
+    setEditingTask(null);
+    setForm(emptyForm());
+  };
 
   const handleTabChange = (index: number) => {
     setActiveTab(index);
@@ -103,41 +149,65 @@ export default function TasksPage() {
     setAppliedParams(status === "ALL" ? {} : { status });
   };
 
-  const handleCreate = () => {
+  const handleSubmitForm = () => {
     if (!form.title.trim() || !form.assigneeId) {
       showSnackbar("Vui lòng nhập tiêu đề và người thực hiện", "warning");
       return;
     }
 
-    createTask(
-      {
-        title: form.title.trim(),
-        description: form.description.trim() || undefined,
-        priority: form.priority,
-        assigneeId: form.assigneeId,
-        dueDate: form.dueDate,
-        tags: form.tags
-          ? form.tags.split(",").map((t) => t.trim()).filter(Boolean)
-          : undefined,
-      },
-      {
-        onSuccess: () => {
-          showSnackbar("Tạo công việc thành công", "success");
-          setOpenCreate(false);
-          setForm({
-            title: "",
-            description: "",
-            priority: "MEDIUM",
-            assigneeId: "",
-            dueDate: new Date().toISOString().slice(0, 10),
-            tags: "",
-          });
+    const payload = {
+      title: form.title.trim(),
+      description: form.description.trim() || undefined,
+      priority: form.priority,
+      assigneeId: form.assigneeId,
+      dueDate: form.dueDate,
+      tags: form.tags
+        ? form.tags.split(",").map((t) => t.trim()).filter(Boolean)
+        : undefined,
+    };
+
+    if (isEditMode && editingTask) {
+      updateTask(
+        {
+          id: editingTask.id,
+          payload: { ...payload, status: form.status },
         },
-        onError: (err) => {
-          showSnackbar(getApiErrorMessage(err, "Không thể tạo công việc"), "error");
+        {
+          onSuccess: () => {
+            showSnackbar("Cập nhật công việc thành công", "success");
+            handleCloseForm();
+          },
+          onError: (err) => {
+            showSnackbar(getApiErrorMessage(err, "Không thể cập nhật công việc"), "error");
+          },
         },
+      );
+      return;
+    }
+
+    createTask(payload, {
+      onSuccess: () => {
+        showSnackbar("Tạo công việc thành công", "success");
+        handleCloseForm();
       },
-    );
+      onError: (err) => {
+        showSnackbar(getApiErrorMessage(err, "Không thể tạo công việc"), "error");
+      },
+    });
+  };
+
+  const handleConfirmDelete = () => {
+    if (!deleteId) return;
+
+    deleteTask(deleteId, {
+      onSuccess: () => {
+        showSnackbar("Xóa công việc thành công", "success");
+        setDeleteId(null);
+      },
+      onError: (err) => {
+        showSnackbar(getApiErrorMessage(err, "Không thể xóa công việc"), "error");
+      },
+    });
   };
 
   const handleStatusChange = (id: string, status: TaskStatus) => {
@@ -211,7 +281,7 @@ export default function TasksPage() {
           <Button
             variant="contained"
             startIcon={<AddIcon />}
-            onClick={() => setOpenCreate(true)}
+            onClick={handleOpenCreate}
             sx={{
               bgcolor: "#f44336",
               textTransform: "none",
@@ -330,27 +400,51 @@ export default function TasksPage() {
                     </TableCell>
                     <TableCell>{task.createdBy}</TableCell>
                     <TableCell>
-                      {task.status === "TODO" && (
-                        <Button
-                          size="small"
-                          sx={{ textTransform: "none" }}
-                          onClick={() =>
-                            handleStatusChange(task.id, "IN_PROGRESS")
-                          }
-                        >
-                          Bắt đầu
-                        </Button>
-                      )}
-                      {task.status === "IN_PROGRESS" && (
-                        <Button
-                          size="small"
-                          color="success"
-                          sx={{ textTransform: "none" }}
-                          onClick={() => handleStatusChange(task.id, "DONE")}
-                        >
-                          Hoàn thành
-                        </Button>
-                      )}
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexWrap: "wrap" }}>
+                        {task.status === "TODO" && (
+                          <Button
+                            size="small"
+                            sx={{ textTransform: "none" }}
+                            onClick={() =>
+                              handleStatusChange(task.id, "IN_PROGRESS")
+                            }
+                          >
+                            Bắt đầu
+                          </Button>
+                        )}
+                        {task.status === "IN_PROGRESS" && (
+                          <Button
+                            size="small"
+                            color="success"
+                            sx={{ textTransform: "none" }}
+                            onClick={() => handleStatusChange(task.id, "DONE")}
+                          >
+                            Hoàn thành
+                          </Button>
+                        )}
+                        {isAdmin && (
+                          <>
+                            <Tooltip title="Sửa">
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                onClick={() => handleOpenEdit(task)}
+                              >
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Xóa">
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={() => setDeleteId(task.id)}
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </>
+                        )}
+                      </Box>
                     </TableCell>
                   </TableRow>
                 ))
@@ -361,13 +455,15 @@ export default function TasksPage() {
       </Paper>
 
       <Dialog
-        open={openCreate}
-        onClose={() => setOpenCreate(false)}
+        open={openForm}
+        onClose={handleCloseForm}
         maxWidth="sm"
         fullWidth
         disableScrollLock
       >
-        <DialogTitle>Tạo công việc mới</DialogTitle>
+        <DialogTitle>
+          {isEditMode ? "Sửa công việc" : "Tạo công việc mới"}
+        </DialogTitle>
         <DialogContent dividers sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
           <TextField
             label="Tiêu đề"
@@ -424,6 +520,27 @@ export default function TasksPage() {
               <MenuItem value="LOW">Thấp</MenuItem>
             </Select>
           </FormControl>
+          {isEditMode && (
+            <FormControl fullWidth size="small">
+              <InputLabel>Trạng thái</InputLabel>
+              <Select
+                label="Trạng thái"
+                value={form.status}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    status: e.target.value as TaskStatus,
+                  }))
+                }
+                MenuProps={{ disableScrollLock: true }}
+              >
+                <MenuItem value="TODO">Chờ làm</MenuItem>
+                <MenuItem value="IN_PROGRESS">Đang làm</MenuItem>
+                <MenuItem value="DONE">Hoàn thành</MenuItem>
+                <MenuItem value="CANCELLED">Đã hủy</MenuItem>
+              </Select>
+            </FormControl>
+          )}
           <TextField
             label="Hạn hoàn thành"
             type="date"
@@ -446,14 +563,42 @@ export default function TasksPage() {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenCreate(false)}>Hủy</Button>
+          <Button onClick={handleCloseForm}>Hủy</Button>
           <Button
             variant="contained"
             sx={{ bgcolor: "#f44336" }}
-            onClick={handleCreate}
-            disabled={isCreating}
+            onClick={handleSubmitForm}
+            disabled={isSaving}
           >
-            {isCreating ? "Đang tạo..." : "Tạo công việc"}
+            {isSaving
+              ? "Đang lưu..."
+              : isEditMode
+                ? "Lưu thay đổi"
+                : "Tạo công việc"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={deleteId !== null}
+        onClose={() => setDeleteId(null)}
+        disableScrollLock
+      >
+        <DialogTitle>Xác nhận xóa</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Bạn có chắc muốn xóa công việc này? Hành động này không thể hoàn tác.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteId(null)}>Hủy</Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={handleConfirmDelete}
+            disabled={isDeleting}
+          >
+            {isDeleting ? "Đang xóa..." : "Xóa"}
           </Button>
         </DialogActions>
       </Dialog>
